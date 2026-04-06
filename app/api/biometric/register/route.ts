@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
 import { z } from "zod";
+import prisma from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 const registerBiometricSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string(),
   faceHash: z.string(),
   irisHash: z.string(),
   fingerprintHash: z.string(),
@@ -12,51 +13,45 @@ const registerBiometricSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, faceHash, irisHash, fingerprintHash } = registerBiometricSchema.parse(body);
+    const { userId, faceHash, irisHash, fingerprintHash } =
+      registerBiometricSchema.parse(body);
 
-    const { data: user } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { data: existing } = await supabaseAdmin
-      .from("biometric_auth")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    const existing = await prisma.biometricAuth.findUnique({
+      where: { userId },
+    });
 
-    const biometricData = {
-      user_id: userId,
-      face_hash: faceHash,
-      iris_hash: irisHash,
-      fingerprint_hash: fingerprintHash,
-      face_verified: true,
-      iris_verified: true,
-      fingerprint_verified: true,
-      verified_at: new Date().toISOString(),
+    const data = {
+      faceHash,
+      irisHash,
+      fingerprintHash,
+      faceVerified: true,
+      irisVerified: true,
+      fingerprintVerified: true,
+      verifiedAt: new Date(),
     };
 
     if (existing) {
-      await supabaseAdmin
-        .from("biometric_auth")
-        .update(biometricData)
-        .eq("user_id", userId);
+      await prisma.biometricAuth.update({
+        where: { userId },
+        data,
+      });
     } else {
-      await supabaseAdmin
-        .from("biometric_auth")
-        .insert(biometricData);
+      await prisma.biometricAuth.create({
+        data: { userId, ...data },
+      });
     }
 
-    await supabaseAdmin.from("audit_logs").insert({
-      user_id: userId,
+    await writeAuditLog({
+      userId,
       action: "biometric_registration",
       details: { all_verified: true },
-      ip_address: request.headers.get("x-forwarded-for") || "unknown",
+      ipAddress: request.headers.get("x-forwarded-for"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return NextResponse.json({
@@ -65,8 +60,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

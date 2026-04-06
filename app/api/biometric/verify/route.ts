@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
 import { z } from "zod";
+import prisma from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 const verifySchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string(),
   biometricType: z.enum(["face", "iris", "fingerprint"]),
   biometricHash: z.string(),
   verified: z.boolean(),
@@ -12,48 +13,65 @@ const verifySchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, biometricType, biometricHash, verified } = verifySchema.parse(body);
+    const { userId, biometricType, biometricHash, verified } =
+      verifySchema.parse(body);
 
-    const { data: existing } = await supabaseAdmin
-      .from("biometric_auth")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    const existing = await prisma.biometricAuth.findUnique({
+      where: { userId },
+    });
 
-    const updateData: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
+    const next = {
+      faceHash: existing?.faceHash ?? null,
+      irisHash: existing?.irisHash ?? null,
+      fingerprintHash: existing?.fingerprintHash ?? null,
+      faceVerified: existing?.faceVerified ?? false,
+      irisVerified: existing?.irisVerified ?? false,
+      fingerprintVerified: existing?.fingerprintVerified ?? false,
     };
 
     if (biometricType === "face") {
-      updateData.face_hash = biometricHash;
-      updateData.face_verified = verified;
+      next.faceHash = biometricHash;
+      next.faceVerified = verified;
     } else if (biometricType === "iris") {
-      updateData.iris_hash = biometricHash;
-      updateData.iris_verified = verified;
-    } else if (biometricType === "fingerprint") {
-      updateData.fingerprint_hash = biometricHash;
-      updateData.fingerprint_verified = verified;
-    }
-
-    if (existing) {
-      await supabaseAdmin
-        .from("biometric_auth")
-        .update(updateData)
-        .eq("user_id", userId);
+      next.irisHash = biometricHash;
+      next.irisVerified = verified;
     } else {
-      await supabaseAdmin
-        .from("biometric_auth")
-        .insert({
-          user_id: userId,
-          ...updateData,
-        });
+      next.fingerprintHash = biometricHash;
+      next.fingerprintVerified = verified;
     }
 
-    await supabaseAdmin.from("audit_logs").insert({
-      user_id: userId,
+    const allDone =
+      next.faceVerified && next.irisVerified && next.fingerprintVerified;
+
+    await prisma.biometricAuth.upsert({
+      where: { userId },
+      create: {
+        userId,
+        faceHash: next.faceHash,
+        irisHash: next.irisHash,
+        fingerprintHash: next.fingerprintHash,
+        faceVerified: next.faceVerified,
+        irisVerified: next.irisVerified,
+        fingerprintVerified: next.fingerprintVerified,
+        verifiedAt: allDone ? new Date() : null,
+      },
+      update: {
+        faceHash: next.faceHash,
+        irisHash: next.irisHash,
+        fingerprintHash: next.fingerprintHash,
+        faceVerified: next.faceVerified,
+        irisVerified: next.irisVerified,
+        fingerprintVerified: next.fingerprintVerified,
+        verifiedAt: allDone ? new Date() : undefined,
+      },
+    });
+
+    await writeAuditLog({
+      userId,
       action: `biometric_verification_${biometricType}`,
       details: { verified, type: biometricType },
-      ip_address: request.headers.get("x-forwarded-for") || "unknown",
+      ipAddress: request.headers.get("x-forwarded-for"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return NextResponse.json({
@@ -62,8 +80,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

@@ -1,34 +1,50 @@
 import { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, FileText, Clock, CircleCheck as CheckCircle } from "lucide-react";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Users,
+  FileText,
+  Clock,
+  CircleCheck as CheckCircle,
+} from "lucide-react";
+import prisma from "@/lib/prisma";
 
 interface DoctorDashboardProps {
   user: User;
 }
 
 export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
-  const { data: accessGrants } = await supabaseAdmin
-    .from("access_grants")
-    .select("*, users!access_grants_patient_id_fkey(*)")
-    .eq("granted_to_id", user.id)
-    .eq("status", "active");
+  const [accessGrants, pendingRequests, patientIds] = await Promise.all([
+    prisma.accessGrant.findMany({
+      where: { doctorId: user.id, status: "active" },
+      include: { patient: true },
+    }),
+    prisma.accessGrant.findMany({
+      where: { doctorId: user.id, status: "pending" },
+      include: { patient: true },
+    }),
+    prisma.accessGrant
+      .findMany({
+        where: { doctorId: user.id, status: "active" },
+        select: { patientId: true },
+      })
+      .then((rows) => rows.map((r) => r.patientId)),
+  ]);
 
-  const { data: pendingRequests } = await supabaseAdmin
-    .from("access_grants")
-    .select("*, users!access_grants_patient_id_fkey(*)")
-    .eq("granted_to_id", user.id)
-    .eq("status", "pending");
-
-  const { data: recentRecords } = await supabaseAdmin
-    .from("medical_records")
-    .select("*, users(*)")
-    .in(
-      "patient_id",
-      accessGrants?.map((g) => g.patient_id) || []
-    )
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const recentRecords =
+    patientIds.length === 0
+      ? []
+      : await prisma.medicalRecord.findMany({
+          where: { patientId: { in: patientIds } },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          include: { patient: true },
+        });
 
   return (
     <div className="space-y-8">
@@ -38,65 +54,68 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">My Patients</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{accessGrants?.length || 0}</div>
+            <div className="text-2xl font-bold">{accessGrants.length}</div>
             <p className="text-xs text-muted-foreground">Active patient access</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingRequests?.length || 0}</div>
+            <div className="text-2xl font-bold">{pendingRequests.length}</div>
             <p className="text-xs text-muted-foreground">Awaiting approval</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Records Viewed</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentRecords?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <div className="text-2xl font-bold">{recentRecords.length}</div>
+            <p className="text-xs text-muted-foreground">Recent in your network</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>Pending Access Requests</CardTitle>
             <CardDescription>Patients requesting your access</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {pendingRequests && pendingRequests.length > 0 ? (
+              {pendingRequests.length > 0 ? (
                 pendingRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                         <span className="text-sm font-medium">
-                          {request.users?.name.charAt(0)}
+                          {request.patient.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{request.users?.name}</p>
+                        <p className="text-sm font-medium">{request.patient.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(request.created_at).toLocaleDateString()}
+                          {request.createdAt.toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="text-xs text-yellow-600 font-medium">Pending</div>
+                    <div className="text-xs font-medium text-amber-600">Pending</div>
                   </div>
                 ))
               ) : (
@@ -106,24 +125,29 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Records</CardTitle>
-            <CardDescription>Recently viewed patient records</CardDescription>
+            <CardDescription>Recently updated patient records</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentRecords && recentRecords.length > 0 ? (
+              {recentRecords.length > 0 ? (
                 recentRecords.map((record) => (
-                  <div key={record.id} className="flex items-start gap-3 p-3 hover:bg-accent rounded-lg transition-colors">
-                    <FileText className="h-4 w-4 mt-1 text-primary" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{record.file_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Patient: {record.users?.name}
+                  <div
+                    key={record.id}
+                    className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                  >
+                    <FileText className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">
+                        {record.fileName ?? "Medical record"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(record.created_at).toLocaleDateString()}
+                        Patient: {record.patient.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {record.createdAt.toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -136,31 +160,36 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-primary/10 shadow-sm">
         <CardHeader>
           <CardTitle>My Patients</CardTitle>
           <CardDescription>Patients who granted you access</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {accessGrants && accessGrants.length > 0 ? (
+            {accessGrants.length > 0 ? (
               accessGrants.map((grant) => (
-                <div key={grant.id} className="flex items-center justify-between p-3 hover:bg-accent rounded-lg transition-colors">
+                <div
+                  key={grant.id}
+                  className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       <span className="text-sm font-medium">
-                        {grant.users?.name.charAt(0)}
+                        {grant.patient.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{grant.users?.name}</p>
-                      <p className="text-xs text-muted-foreground">{grant.users?.email}</p>
+                      <p className="text-sm font-medium">{grant.patient.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {grant.patient.email}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-emerald-600" />
                     <span className="text-xs text-muted-foreground">
-                      Expires: {new Date(grant.expires_at).toLocaleDateString()}
+                      Expires: {grant.expiresAt.toLocaleDateString()}
                     </span>
                   </div>
                 </div>

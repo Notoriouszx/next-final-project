@@ -7,10 +7,12 @@
   },
   "Navbar": {
     "profile": "الملف الشخصي",
+    "dashboard": "لوحة التحكم",
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج",
     "login": "تسجيل الدخول",
-    "signup": "إنشاء حساب"
+    "signup": "إنشاء حساب",
+    "register": "إنشاء حساب"
   },
   "Dashboard": {
     "welcome": "مرحبًا بك",
@@ -24,7 +26,17 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "name": "الاسم الكامل",
-    "confirmPassword": "تأكيد كلمة المرور"
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "biometricVerification": "مطلوب التحقق البيومتري",
+    "verifyFace": "التحقق من الوجه",
+    "verifyIris": "التحقق من القزحية",
+    "verifyFingerprint": "التحقق من البصمة",
+    "otp": "كلمة مرور لمرة واحدة",
+    "enterOTP": "أدخل رمز OTP",
+    "verifyOTP": "تحقق من OTP"
   },
   "Admin": {
     "dashboard": "لوحة تحكم المسؤول",

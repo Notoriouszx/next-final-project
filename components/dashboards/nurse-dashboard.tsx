@@ -1,25 +1,30 @@
 import { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Users, FileText, Activity } from "lucide-react";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import prisma from "@/lib/prisma";
 
 interface NurseDashboardProps {
   user: User;
 }
 
 export default async function NurseDashboard({ user }: NurseDashboardProps) {
-  const { data: assignedPatients } = await supabaseAdmin
-    .from("access_grants")
-    .select("*, users!access_grants_patient_id_fkey(*)")
-    .eq("granted_to_id", user.id)
-    .eq("status", "active");
-
-  const { data: recentActivity } = await supabaseAdmin
-    .from("audit_logs")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("timestamp", { ascending: false })
-    .limit(10);
+  const [assignedPatients, recentActivity] = await Promise.all([
+    prisma.accessGrant.findMany({
+      where: { nurseId: user.id, status: "active" },
+      include: { patient: true },
+    }),
+    prisma.auditLog.findMany({
+      where: { userId: user.id },
+      orderBy: { timestamp: "desc" },
+      take: 10,
+    }),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -29,63 +34,68 @@ export default async function NurseDashboard({ user }: NurseDashboardProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Assigned Patients</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{assignedPatients?.length || 0}</div>
+            <div className="text-2xl font-bold">{assignedPatients.length}</div>
             <p className="text-xs text-muted-foreground">Active assignments</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Activities Today</CardTitle>
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Activities</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentActivity?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Recent actions</p>
+            <div className="text-2xl font-bold">{recentActivity.length}</div>
+            <p className="text-xs text-muted-foreground">Recent audit events</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Records Access</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{assignedPatients?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Available records</p>
+            <div className="text-2xl font-bold">{assignedPatients.length}</div>
+            <p className="text-xs text-muted-foreground">Available patient links</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-primary/10 shadow-sm">
         <CardHeader>
           <CardTitle>Assigned Patients</CardTitle>
           <CardDescription>Patients under your care</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {assignedPatients && assignedPatients.length > 0 ? (
+            {assignedPatients.length > 0 ? (
               assignedPatients.map((assignment) => (
-                <div key={assignment.id} className="flex items-center justify-between p-3 hover:bg-accent rounded-lg transition-colors">
+                <div
+                  key={assignment.id}
+                  className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       <span className="text-sm font-medium">
-                        {assignment.users?.name.charAt(0)}
+                        {assignment.patient.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{assignment.users?.name}</p>
-                      <p className="text-xs text-muted-foreground">{assignment.users?.email}</p>
+                      <p className="text-sm font-medium">{assignment.patient.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {assignment.patient.email}
+                      </p>
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Access until: {new Date(assignment.expires_at).toLocaleDateString()}
+                    Access until: {assignment.expiresAt.toLocaleDateString()}
                   </div>
                 </div>
               ))
@@ -96,21 +106,24 @@ export default async function NurseDashboard({ user }: NurseDashboardProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-primary/10 shadow-sm">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>Your recent actions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentActivity && recentActivity.length > 0 ? (
+            {recentActivity.length > 0 ? (
               recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 border-l-2 border-primary/20">
-                  <Activity className="h-4 w-4 mt-0.5 text-primary" />
-                  <div className="flex-1">
+                <div
+                  key={activity.id}
+                  className="flex items-start gap-3 border-s-2 border-primary/20 ps-3"
+                >
+                  <Activity className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{activity.action}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(activity.timestamp).toLocaleString()}
+                      {activity.timestamp.toLocaleString()}
                     </p>
                   </div>
                 </div>

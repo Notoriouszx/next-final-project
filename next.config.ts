@@ -4,10 +4,7 @@ const nextConfig = withNextIntl("./i18n/request.ts")({
   experimental: {
     useCache: true,
   },
-  
-  /* config options here */
-
-
+  serverExternalPackages: ["@prisma/client", "better-auth"],
 });
 
 export default nextConfig;

@@ -44,7 +44,7 @@ export function LanguageSwitcher() {
             onClick={() => handleLanguageChange(language.code)}
             className="cursor-pointer"
           >
-            <span className="mr-2">{language.flag}</span>
+            <span className="me-2">{language.flag}</span>
             {language.name}
             {locale === language.code && " ✓"}
           </DropdownMenuItem>

@@ -1,68 +1,121 @@
 import { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Activity, FileText, UserPlus, TrendingUp, CircleAlert as AlertCircle } from "lucide-react";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Users,
+  Activity,
+  FileText,
+  UserPlus,
+  TrendingUp,
+  CircleAlert as AlertCircle,
+} from "lucide-react";
+import prisma from "@/lib/prisma";
+import { AdminCharts } from "./admin-charts";
 
 interface AdminDashboardProps {
   user: User;
 }
 
+function buildDayAxis(days: number) {
+  const axis: { key: string; label: string }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    axis.push({
+      key: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+    });
+  }
+  return axis;
+}
+
+function countsPerDay(dates: Date[], axis: { key: string; label: string }[]) {
+  const map = new Map(axis.map((a) => [a.key, 0]));
+  for (const dt of dates) {
+    const key = new Date(dt).toISOString().slice(0, 10);
+    if (map.has(key)) {
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+  }
+  return axis.map((a) => ({ label: a.label, value: map.get(a.key) ?? 0 }));
+}
+
 export default async function AdminDashboard({ user }: AdminDashboardProps) {
-  const { count: totalUsers } = await supabaseAdmin
-    .from("users")
-    .select("*", { count: "exact", head: true });
+  const axis = buildDayAxis(14);
+  const since = new Date(axis[0].key);
 
-  const { count: totalDoctors } = await supabaseAdmin
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "doctor");
+  const [
+    totalUsers,
+    totalDoctors,
+    totalRecords,
+    totalPatients,
+    recentActivities,
+    recentUsers,
+    usersInRange,
+    recordsInRange,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { role: "doctor" } }),
+    prisma.medicalRecord.count(),
+    prisma.user.count({ where: { role: "patient" } }),
+    prisma.auditLog.findMany({
+      orderBy: { timestamp: "desc" },
+      take: 10,
+    }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.user.findMany({
+      where: { createdAt: { gte: since } },
+      select: { createdAt: true },
+    }),
+    prisma.medicalRecord.findMany({
+      where: { createdAt: { gte: since } },
+      select: { createdAt: true },
+    }),
+  ]);
 
-  const { count: totalRecords } = await supabaseAdmin
-    .from("medical_records")
-    .select("*", { count: "exact", head: true });
-
-  const { count: totalPatients } = await supabaseAdmin
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "patient");
-
-  const { data: recentActivities } = await supabaseAdmin
-    .from("audit_logs")
-    .select("*")
-    .order("timestamp", { ascending: false })
-    .limit(10);
-
-  const { data: recentUsers } = await supabaseAdmin
-    .from("users")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const userGrowth = countsPerDay(
+    usersInRange.map((u) => u.createdAt),
+    axis
+  );
+  const recordsPerDay = countsPerDay(
+    recordsInRange.map((r) => r.createdAt),
+    axis
+  );
 
   const stats = [
     {
       title: "Total Users",
-      value: totalUsers || 0,
+      value: totalUsers,
       icon: Users,
       description: "All registered users",
       trend: "+12.5%",
     },
     {
       title: "Active Doctors",
-      value: totalDoctors || 0,
+      value: totalDoctors,
       icon: Activity,
       description: "Verified doctors",
       trend: "+4.2%",
     },
     {
       title: "Medical Records",
-      value: totalRecords || 0,
+      value: totalRecords,
       icon: FileText,
       description: "Total records uploaded",
       trend: "+23.1%",
     },
     {
       title: "Patients",
-      value: totalPatients || 0,
+      value: totalPatients,
       icon: UserPlus,
       description: "Registered patients",
       trend: "+8.7%",
@@ -80,16 +133,16 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <Card key={stat.title} className="border-primary/10 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground">{stat.description}</p>
-                <div className="flex items-center text-xs text-green-600 mt-2">
-                  <TrendingUp className="h-3 w-3 mr-1" />
+                <div className="mt-2 flex items-center text-xs text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp className="me-1 h-3 w-3" />
                   {stat.trend} from last month
                 </div>
               </CardContent>
@@ -98,22 +151,27 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
         })}
       </div>
 
+      <AdminCharts userGrowth={userGrowth} recordsPerDay={recordsPerDay} />
+
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Latest system activities and events</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities && recentActivities.length > 0 ? (
+              {recentActivities.length > 0 ? (
                 recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 border-l-2 border-primary/20 hover:border-primary/50 transition-colors">
-                    <Activity className="h-4 w-4 mt-0.5 text-primary" />
-                    <div className="flex-1 space-y-1">
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-3 border-s-2 border-primary/25 ps-3 transition-colors hover:border-primary/50"
+                  >
+                    <Activity className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1 space-y-1">
                       <p className="text-sm font-medium">{activity.action}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(activity.timestamp).toLocaleString()}
+                        {activity.timestamp.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -125,25 +183,29 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>System Alerts</CardTitle>
             <CardDescription>Important notifications and warnings</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <AlertCircle className="h-4 w-4 mt-0.5 text-yellow-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">System Update Available</p>
-                  <p className="text-xs text-muted-foreground">Version 2.1.0 is ready</p>
+              <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">Compliance reminder</p>
+                  <p className="text-xs text-muted-foreground">
+                    Review audit logs weekly for PHI access patterns.
+                  </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <AlertCircle className="h-4 w-4 mt-0.5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New Users This Week</p>
-                  <p className="text-xs text-muted-foreground">{totalUsers || 0} new registrations</p>
+              <div className="flex items-start gap-3 rounded-lg bg-sky-50 p-3 dark:bg-sky-950/30">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">New registrations</p>
+                  <p className="text-xs text-muted-foreground">
+                    {totalUsers} total accounts in the system.
+                  </p>
                 </div>
               </div>
             </div>
@@ -151,31 +213,36 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-primary/10 shadow-sm">
         <CardHeader>
           <CardTitle>Recent Users</CardTitle>
           <CardDescription>Latest user registrations</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentUsers && recentUsers.length > 0 ? (
+            {recentUsers.length > 0 ? (
               recentUsers.map((u) => (
-                <div key={u.id} className="flex items-center justify-between p-3 hover:bg-accent rounded-lg transition-colors">
+                <div
+                  key={u.id}
+                  className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium">{u.name.charAt(0)}</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <span className="text-sm font-medium">
+                        {u.name.charAt(0).toUpperCase()}
+                      </span>
                     </div>
                     <div>
                       <p className="text-sm font-medium">{u.name}</p>
                       <p className="text-xs text-muted-foreground">{u.email}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-medium capitalize px-2 py-1 rounded-full bg-primary/10 text-primary">
+                  <div className="text-end">
+                    <span className="inline-block rounded-full bg-primary/10 px-2 py-1 text-xs font-medium capitalize text-primary">
                       {u.role}
                     </span>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(u.created_at).toLocaleDateString()}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {u.createdAt.toLocaleDateString()}
                     </p>
                   </div>
                 </div>

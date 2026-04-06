@@ -7,10 +7,12 @@
   },
   "Navbar": {
     "profile": "Profil",
+    "dashboard": "Tableau de bord",
     "settings": "Paramètres",
     "logout": "Déconnexion",
     "login": "Connexion",
-    "signup": "S'inscrire"
+    "signup": "S'inscrire",
+    "register": "S'inscrire"
   },
   "Dashboard": {
     "welcome": "Bienvenue",
@@ -24,7 +26,17 @@
     "email": "Email",
     "password": "Mot de passe",
     "name": "Nom complet",
-    "confirmPassword": "Confirmer le mot de passe"
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "alreadyHaveAccount": "Déjà un compte ?",
+    "dontHaveAccount": "Pas encore de compte ?",
+    "biometricVerification": "Vérification biométrique requise",
+    "verifyFace": "Vérifier le visage",
+    "verifyIris": "Vérifier l'iris",
+    "verifyFingerprint": "Vérifier l'empreinte",
+    "otp": "Mot de passe à usage unique",
+    "enterOTP": "Entrer le code OTP",
+    "verifyOTP": "Vérifier l'OTP"
   },
   "Admin": {
     "dashboard": "Tableau de bord Admin",

@@ -1,37 +1,34 @@
 import { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { FileText, Key, Shield, Upload } from "lucide-react";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import prisma from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 interface PatientDashboardProps {
   user: User;
 }
 
 export default async function PatientDashboard({ user }: PatientDashboardProps) {
-  const { data: myRecords } = await supabaseAdmin
-    .from("medical_records")
-    .select("*")
-    .eq("patient_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const { count: totalRecords } = await supabaseAdmin
-    .from("medical_records")
-    .select("*", { count: "exact", head: true })
-    .eq("patient_id", user.id);
-
-  const { data: activeGrants } = await supabaseAdmin
-    .from("access_grants")
-    .select("*, users!access_grants_granted_to_id_fkey(*)")
-    .eq("patient_id", user.id)
-    .eq("status", "active");
-
-  const { count: totalGrants } = await supabaseAdmin
-    .from("access_grants")
-    .select("*", { count: "exact", head: true })
-    .eq("patient_id", user.id);
+  const [myRecords, totalRecords, activeGrants, totalGrants] = await Promise.all([
+    prisma.medicalRecord.findMany({
+      where: { patientId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.medicalRecord.count({ where: { patientId: user.id } }),
+    prisma.accessGrant.findMany({
+      where: { patientId: user.id, status: "active" },
+      include: { doctor: true, nurse: true },
+    }),
+    prisma.accessGrant.count({ where: { patientId: user.id } }),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -41,80 +38,91 @@ export default async function PatientDashboard({ user }: PatientDashboardProps) 
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">My Records</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalRecords || 0}</div>
+            <div className="text-2xl font-bold">{totalRecords}</div>
             <p className="text-xs text-muted-foreground">Total medical records</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Access</CardTitle>
             <Key className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeGrants?.length || 0}</div>
+            <div className="text-2xl font-bold">{activeGrants.length}</div>
             <p className="text-xs text-muted-foreground">Granted permissions</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Security</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user.two_factor_enabled ? "On" : "Off"}</div>
+            <div className="text-2xl font-bold">
+              {user.two_factor_enabled ? "On" : "Off"}
+            </div>
             <p className="text-xs text-muted-foreground">2FA Status</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="border-primary/10 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Grants</CardTitle>
             <Key className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalGrants || 0}</div>
+            <div className="text-2xl font-bold">{totalGrants}</div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Medical Records</CardTitle>
             <CardDescription>Your latest uploaded documents</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {myRecords && myRecords.length > 0 ? (
+              {myRecords.length > 0 ? (
                 myRecords.map((record) => (
-                  <div key={record.id} className="flex items-start gap-3 p-3 hover:bg-accent rounded-lg transition-colors">
-                    <FileText className="h-4 w-4 mt-1 text-primary" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{record.file_name}</p>
-                      <p className="text-xs text-muted-foreground">{record.description}</p>
+                  <div
+                    key={record.id}
+                    className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                  >
+                    <FileText className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">
+                        {record.fileName ?? "Record"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(record.created_at).toLocaleDateString()}
+                        {record.description ?? "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {record.createdAt.toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground mb-4">No records uploaded yet</p>
+                <div className="py-6 text-center">
+                  <FileText className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    No records uploaded yet
+                  </p>
                   <Button asChild size="sm">
                     <Link href="/dashboard/upload">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Your First Record
+                      <Upload className="me-2 h-4 w-4" />
+                      Upload your first record
                     </Link>
                   </Button>
                 </div>
@@ -123,42 +131,52 @@ export default async function PatientDashboard({ user }: PatientDashboardProps) 
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>Active Access Grants</CardTitle>
-            <CardDescription>Doctors and nurses with access to your records</CardDescription>
+            <CardDescription>
+              Doctors and nurses with access to your records
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {activeGrants && activeGrants.length > 0 ? (
-                activeGrants.map((grant) => (
-                  <div key={grant.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-medium">
-                          {grant.users?.name.charAt(0)}
-                        </span>
+              {activeGrants.length > 0 ? (
+                activeGrants.map((grant) => {
+                  const provider = grant.doctor ?? grant.nurse;
+                  return (
+                    <div
+                      key={grant.id}
+                      className="flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <span className="text-sm font-medium">
+                            {provider?.name.charAt(0).toUpperCase() ?? "?"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{provider?.name}</p>
+                          <p className="text-xs capitalize text-muted-foreground">
+                            {grant.doctorId ? "doctor" : "nurse"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{grant.users?.name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          {grant.users?.role}
-                        </p>
+                      <div className="text-xs text-muted-foreground">
+                        Expires: {grant.expiresAt.toLocaleDateString()}
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Expires: {new Date(grant.expires_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <div className="text-center py-6">
-                  <Key className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground mb-4">No active access grants</p>
+                <div className="py-6 text-center">
+                  <Key className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    No active access grants
+                  </p>
                   <Button asChild size="sm" variant="outline">
                     <Link href="/dashboard/grant-access">
-                      <Key className="h-4 w-4 mr-2" />
-                      Grant Access
+                      <Key className="me-2 h-4 w-4" />
+                      Grant access
                     </Link>
                   </Button>
                 </div>
@@ -169,41 +187,41 @@ export default async function PatientDashboard({ user }: PatientDashboardProps) 
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="cursor-pointer border-primary/10 shadow-sm transition-shadow hover:shadow-md">
           <CardHeader>
-            <Upload className="h-10 w-10 text-primary mb-2" />
-            <CardTitle>Upload Record</CardTitle>
+            <Upload className="mb-2 h-10 w-10 text-primary" />
+            <CardTitle>Upload record</CardTitle>
             <CardDescription>Add a new medical document</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full">
-              <Link href="/dashboard/upload">Upload Now</Link>
+              <Link href="/dashboard/upload">Upload now</Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="cursor-pointer border-primary/10 shadow-sm transition-shadow hover:shadow-md">
           <CardHeader>
-            <Key className="h-10 w-10 text-primary mb-2" />
-            <CardTitle>Grant Access</CardTitle>
-            <CardDescription>Share records with healthcare providers</CardDescription>
+            <Key className="mb-2 h-10 w-10 text-primary" />
+            <CardTitle>Grant access</CardTitle>
+            <CardDescription>Share records with providers</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full" variant="outline">
-              <Link href="/dashboard/grant-access">Manage Access</Link>
+              <Link href="/dashboard/grant-access">Manage access</Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="cursor-pointer border-primary/10 shadow-sm transition-shadow hover:shadow-md">
           <CardHeader>
-            <Shield className="h-10 w-10 text-primary mb-2" />
+            <Shield className="mb-2 h-10 w-10 text-primary" />
             <CardTitle>Security</CardTitle>
-            <CardDescription>Manage your security settings</CardDescription>
+            <CardDescription>2FA and session safety</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full" variant="outline">
-              <Link href="/dashboard/security">Security Settings</Link>
+              <Link href="/dashboard/security">Security settings</Link>
             </Button>
           </CardContent>
         </Card>

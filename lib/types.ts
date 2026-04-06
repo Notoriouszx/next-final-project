@@ -16,58 +16,42 @@ export interface User {
 export interface BiometricAuth {
   id: string;
   user_id: string;
-  face_hash?: string;
-  iris_hash?: string;
-  fingerprint_hash?: string;
+  face_hash?: string | null;
+  iris_hash?: string | null;
+  fingerprint_hash?: string | null;
   face_verified: boolean;
   iris_verified: boolean;
   fingerprint_verified: boolean;
-  verified_at?: string;
+  verified_at?: string | null;
 }
 
 export interface MedicalRecord {
   id: string;
   patient_id: string;
   file_url: string;
-  file_name: string;
-  file_type?: string;
-  file_size?: number;
-  description?: string;
-  record_type?: string;
-  record_date?: string;
-  uploaded_by?: string;
+  file_name?: string | null;
+  file_type?: string | null;
+  description?: string | null;
   created_at: string;
 }
 
 export interface AccessGrant {
   id: string;
   patient_id: string;
-  granted_to_id?: string;
-  access_type: "magic_link" | "otp" | "direct";
-  token?: string;
-  otp?: string;
-  status: "pending" | "active" | "expired" | "revoked";
+  doctor_id?: string | null;
+  nurse_id?: string | null;
+  token?: string | null;
+  otp?: string | null;
+  status: string;
   expires_at: string;
-  used_at?: string;
   created_at: string;
 }
 
 export interface AuditLog {
   id: string;
-  user_id?: string;
+  user_id?: string | null;
   action: string;
-  resource_type?: string;
-  resource_id?: string;
-  details?: Record<string, unknown>;
-  ip_address?: string;
-  user_agent?: string;
+  details?: Record<string, unknown> | null;
+  ip_address?: string | null;
   timestamp: string;
-}
-
-export interface Session {
-  id: string;
-  user_id: string;
-  token: string;
-  expires_at: string;
-  created_at: string;
 }

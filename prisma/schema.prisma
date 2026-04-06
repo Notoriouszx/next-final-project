@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ——— Better Auth core ———
+
+model User {
+  id               String    @id
+  name             String
+  email            String
+  emailVerified    Boolean   @default(false)
+  image            String?
+  createdAt        DateTime
+  updatedAt        DateTime
+  twoFactorEnabled Boolean     @default(false)
+  role             UserRole    @default(patient)
+  phone            String?
+  isActive         Boolean     @default(true)
+
+  sessions      Session[]
+  accounts      Account[]
+  twoFactor     TwoFactor?
+  biometricAuth BiometricAuth?
+
+  medicalRecords MedicalRecord[]
+
+  patientGrants AccessGrant[] @relation("PatientAccessGrants")
+  doctorGrants  AccessGrant[] @relation("DoctorAccessGrants")
+  nurseGrants   AccessGrant[] @relation("NurseAccessGrants")
+
+  auditLogs AuditLog[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+enum UserRole {
+  patient
+  doctor
+  nurse
+  admin
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@unique([providerId, accountId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
+}
+
+// ——— Domain ———
+
+model BiometricAuth {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  faceHash            String?
+  irisHash            String?
+  fingerprintHash     String?
+  faceVerified        Boolean   @default(false)
+  irisVerified        Boolean   @default(false)
+  fingerprintVerified Boolean   @default(false)
+  verifiedAt          DateTime?
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("biometric_auth")
+}
+
+model MedicalRecord {
+  id          String   @id @default(cuid())
+  patientId   String
+  fileUrl     String
+  fileName    String?
+  fileType    String?
+  description String?
+  createdAt   DateTime @default(now())
+  patient     User     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("medical_record")
+}
+
+model AccessGrant {
+  id        String   @id @default(cuid())
+  patientId String
+  doctorId  String?
+  nurseId   String?
+  token     String?  @unique
+  otp       String?
+  expiresAt DateTime
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+
+  patient User  @relation("PatientAccessGrants", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  User? @relation("DoctorAccessGrants", fields: [doctorId], references: [id], onDelete: Cascade)
+  nurse   User? @relation("NurseAccessGrants", fields: [nurseId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("access_grant")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  timestamp DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([timestamp])
+  @@map("audit_log")
+}

@@ -1,6 +1,9 @@
-import { getTranslations } from "next-intl/server";
-import { setRequestLocale } from "next-intl/server";
-import Image from "next/image";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Navbar } from "@/components/navbar";
+import { getSession } from "@/lib/session";
+import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/button";
+import { Activity, Shield, Stethoscope, ArrowRight } from "lucide-react";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -8,64 +11,87 @@ export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("HomePage");
+  const user = await getSession();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-sky-50/90 via-background to-indigo-50/40 dark:from-slate-950 dark:via-background dark:to-slate-900">
+      <Navbar
+        user={
+          user
+            ? {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+              }
+            : undefined
+        }
+      />
+      <main className="container flex flex-1 flex-col items-center justify-center gap-12 py-16 md:py-24">
+        <div className="mx-auto max-w-3xl text-center space-y-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
+            <Shield className="h-3.5 w-3.5" />
+            HIPAA-minded architecture · Better Auth · Prisma
+          </div>
+          <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("title")}
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-pretty text-lg text-muted-foreground md:text-xl">
+            {t("subtitle")}
           </p>
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {user ? (
+              <Button asChild size="lg" className="gap-2">
+                <Link href="/dashboard">
+                  {t("getStarted")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild size="lg" className="gap-2">
+                  <Link href="/auth/register">
+                    {t("getStarted")}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/auth/login">{t("learnMore")}</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="grid w-full max-w-5xl gap-6 md:grid-cols-3">
+          {[
+            {
+              icon: Activity,
+              title: "Patients",
+              text: "Self-service portal, medical records, and granular access sharing.",
+            },
+            {
+              icon: Stethoscope,
+              title: "Care teams",
+              text: "Doctors and nurses with biometric-gated sessions and audit trails.",
+            },
+            {
+              icon: Shield,
+              title: "Security",
+              text: "2FA, magic links, email OTP, and external biometric verification APIs.",
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="rounded-2xl border border-primary/10 bg-card/80 p-6 text-start shadow-sm backdrop-blur transition hover:border-primary/25"
+            >
+              <item.icon className="mb-3 h-8 w-8 text-primary" />
+              <h2 className="text-lg font-semibold">{item.title}</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                {item.text}
+              </p>
+            </div>
+          ))}
         </div>
       </main>
     </div>

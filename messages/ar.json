@@ -1,5 +1,41 @@
 {
   "HomePage": {
-    "title": "مرحبا بالعالم!"
+    "title": "مرحبًا بك في الرعاية الصحية الإلكترونية",
+    "subtitle": "نظام حديث لإدارة الرعاية الصحية",
+    "getStarted": "ابدأ الآن",
+    "learnMore": "اعرف المزيد"
+  },
+  "Navbar": {
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج",
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب"
+  },
+  "Dashboard": {
+    "welcome": "مرحبًا بك",
+    "overview": "نظرة عامة",
+    "stats": "الإحصائيات",
+    "recentActivity": "النشاط الأخير"
+  },
+  "Auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم الكامل",
+    "confirmPassword": "تأكيد كلمة المرور"
+  },
+  "Admin": {
+    "dashboard": "لوحة تحكم المسؤول",
+    "totalUsers": "إجمالي المستخدمين",
+    "activeDoctors": "الأطباء النشطون",
+    "recordsUploaded": "السجلات المحملة"
+  },
+  "Common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "loading": "جاري التحميل..."
   }
 }

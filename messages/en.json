@@ -1,5 +1,108 @@
 {
   "HomePage": {
-    "title": "Hello world!"
+    "title": "Welcome to E-Healthcare",
+    "subtitle": "Modern healthcare management system",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More"
+  },
+  "Navbar": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
+  "Dashboard": {
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "stats": "Statistics",
+    "recentActivity": "Recent Activity"
+  },
+  "Auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "biometricVerification": "Biometric Verification Required",
+    "verifyFace": "Verify Face",
+    "verifyIris": "Verify Iris",
+    "verifyFingerprint": "Verify Fingerprint",
+    "otp": "One-Time Password",
+    "enterOTP": "Enter OTP Code",
+    "verifyOTP": "Verify OTP"
+  },
+  "Admin": {
+    "dashboard": "Admin Dashboard",
+    "totalUsers": "Total Users",
+    "activeDoctors": "Active Doctors",
+    "recordsUploaded": "Records Uploaded",
+    "newPatients": "New Patients",
+    "userGrowth": "User Growth",
+    "recordsPerDay": "Records Per Day",
+    "recentActivity": "Recent Activity",
+    "systemAlerts": "System Alerts",
+    "createDoctor": "Create Doctor",
+    "createNurse": "Create Nurse",
+    "manageUsers": "Manage Users"
+  },
+  "Doctor": {
+    "dashboard": "Doctor Dashboard",
+    "myPatients": "My Patients",
+    "accessRequests": "Access Requests",
+    "recentRecords": "Recently Viewed Records",
+    "pendingRequests": "Pending Access Requests",
+    "approveAccess": "Approve Access",
+    "viewRecord": "View Record"
+  },
+  "Nurse": {
+    "dashboard": "Nurse Dashboard",
+    "assignedPatients": "Assigned Patients",
+    "viewRecords": "View Records"
+  },
+  "Patient": {
+    "dashboard": "Patient Dashboard",
+    "myRecords": "My Records",
+    "uploadRecord": "Upload Medical Record",
+    "grantAccess": "Grant Access",
+    "recordHistory": "Record History",
+    "accessManagement": "Access Management",
+    "generateOTP": "Generate OTP",
+    "generateMagicLink": "Generate Magic Link",
+    "activeGrants": "Active Access Grants",
+    "revokeAccess": "Revoke Access",
+    "securitySettings": "Security Settings",
+    "enable2FA": "Enable Two-Factor Authentication",
+    "biometricAuth": "Biometric Authentication"
+  },
+  "Records": {
+    "title": "Medical Records",
+    "fileName": "File Name",
+    "fileType": "Type",
+    "uploadDate": "Upload Date",
+    "description": "Description",
+    "download": "Download",
+    "view": "View",
+    "delete": "Delete",
+    "noRecords": "No records found"
+  },
+  "Common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "confirm": "Confirm",
+    "close": "Close"
   }
 }

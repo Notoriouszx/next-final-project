@@ -1,5 +1,41 @@
 {
   "HomePage": {
-    "title": "Bonjour le monde !"
+    "title": "Bienvenue sur E-Healthcare",
+    "subtitle": "Système moderne de gestion de la santé",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus"
+  },
+  "Navbar": {
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "signup": "S'inscrire"
+  },
+  "Dashboard": {
+    "welcome": "Bienvenue",
+    "overview": "Aperçu",
+    "stats": "Statistiques",
+    "recentActivity": "Activité récente"
+  },
+  "Auth": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "name": "Nom complet",
+    "confirmPassword": "Confirmer le mot de passe"
+  },
+  "Admin": {
+    "dashboard": "Tableau de bord Admin",
+    "totalUsers": "Total Utilisateurs",
+    "activeDoctors": "Médecins Actifs",
+    "recordsUploaded": "Dossiers Téléchargés"
+  },
+  "Common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "loading": "Chargement..."
   }
 }

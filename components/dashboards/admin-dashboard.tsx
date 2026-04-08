@@ -83,11 +83,11 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
   ]);
 
   const userGrowth = countsPerDay(
-    usersInRange.map((u) => u.createdAt),
+    usersInRange.map((u: { createdAt: Date }) => u.createdAt),
     axis
   );
   const recordsPerDay = countsPerDay(
-    recordsInRange.map((r) => r.createdAt),
+    recordsInRange.map((r: { createdAt: Date }) => r.createdAt),
     axis
   );
 

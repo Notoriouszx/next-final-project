@@ -162,7 +162,8 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
           <CardContent>
             <div className="space-y-4">
               {recentActivities.length > 0 ? (
-                recentActivities.map((activity) => (
+                recentActivities.map(
+                  (activity: { id: string; action: string; timestamp: Date }) => (
                   <div
                     key={activity.id}
                     className="flex items-start gap-3 border-s-2 border-primary/25 ps-3 transition-colors hover:border-primary/50"
@@ -175,7 +176,8 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
                       </p>
                     </div>
                   </div>
-                ))
+                  )
+                )
               ) : (
                 <p className="text-sm text-muted-foreground">No recent activities</p>
               )}
@@ -221,7 +223,14 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
         <CardContent>
           <div className="space-y-3">
             {recentUsers.length > 0 ? (
-              recentUsers.map((u) => (
+              recentUsers.map(
+                (u: {
+                  id: string;
+                  name: string;
+                  email: string;
+                  role: string;
+                  createdAt: Date;
+                }) => (
                 <div
                   key={u.id}
                   className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
@@ -246,7 +255,8 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
                     </p>
                   </div>
                 </div>
-              ))
+                )
+              )
             ) : (
               <p className="text-sm text-muted-foreground">No users yet</p>
             )}

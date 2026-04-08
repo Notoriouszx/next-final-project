@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+
+type AuditLogCreateData = Parameters<typeof prisma.auditLog.create>[0]["data"];
+type AuditLogDetails = AuditLogCreateData["details"];
 
 export async function writeAuditLog(input: {
   userId?: string | null;
@@ -12,7 +14,7 @@ export async function writeAuditLog(input: {
     data: {
       userId: input.userId ?? undefined,
       action: input.action,
-      details: input.details as Prisma.InputJsonValue | undefined,
+      details: input.details as AuditLogDetails,
       ipAddress: input.ipAddress ?? undefined,
       userAgent: input.userAgent ?? undefined,
     },

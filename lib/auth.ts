@@ -9,6 +9,8 @@ const secret =
   "development-only-secret-min-32-chars-long!!";
 
 export const auth = betterAuth({
+  trustedOrigins: ["*"],
+
   appName: "E-HealthCare",
   baseURL:
     process.env.BETTER_AUTH_URL ??

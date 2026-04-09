@@ -33,7 +33,9 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
         where: { doctorId: user.id, status: "active" },
         select: { patientId: true },
       })
-      .then((rows) => rows.map((r) => r.patientId)),
+      .then(
+        (rows: { patientId: string }[]) => rows.map((r: { patientId: string }) => r.patientId)
+      ),
   ]);
 
   const recentRecords =
@@ -97,7 +99,12 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
           <CardContent>
             <div className="space-y-3">
               {pendingRequests.length > 0 ? (
-                pendingRequests.map((request) => (
+                pendingRequests.map(
+                  (request: {
+                    id: string;
+                    createdAt: Date;
+                    patient: { name: string };
+                  }) => (
                   <div
                     key={request.id}
                     className="flex items-center justify-between rounded-lg border p-3"
@@ -117,7 +124,8 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
                     </div>
                     <div className="text-xs font-medium text-amber-600">Pending</div>
                   </div>
-                ))
+                  )
+                )
               ) : (
                 <p className="text-sm text-muted-foreground">No pending requests</p>
               )}
@@ -133,7 +141,13 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
           <CardContent>
             <div className="space-y-3">
               {recentRecords.length > 0 ? (
-                recentRecords.map((record) => (
+                recentRecords.map(
+                  (record: {
+                    id: string;
+                    fileName: string | null;
+                    createdAt: Date;
+                    patient: { name: string };
+                  }) => (
                   <div
                     key={record.id}
                     className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
@@ -151,7 +165,8 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
                       </p>
                     </div>
                   </div>
-                ))
+                  )
+                )
               ) : (
                 <p className="text-sm text-muted-foreground">No recent records</p>
               )}
@@ -168,7 +183,12 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
         <CardContent>
           <div className="space-y-3">
             {accessGrants.length > 0 ? (
-              accessGrants.map((grant) => (
+              accessGrants.map(
+                (grant: {
+                  id: string;
+                  expiresAt: Date;
+                  patient: { name: string; email: string };
+                }) => (
                 <div
                   key={grant.id}
                   className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
@@ -193,7 +213,8 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
                     </span>
                   </div>
                 </div>
-              ))
+                )
+              )
             ) : (
               <p className="text-sm text-muted-foreground">No patients yet</p>
             )}

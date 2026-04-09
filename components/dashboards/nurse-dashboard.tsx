@@ -76,7 +76,12 @@ export default async function NurseDashboard({ user }: NurseDashboardProps) {
         <CardContent>
           <div className="space-y-3">
             {assignedPatients.length > 0 ? (
-              assignedPatients.map((assignment) => (
+              assignedPatients.map(
+                (assignment: {
+                  id: string;
+                  expiresAt: Date;
+                  patient: { name: string; email: string };
+                }) => (
                 <div
                   key={assignment.id}
                   className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
@@ -98,7 +103,8 @@ export default async function NurseDashboard({ user }: NurseDashboardProps) {
                     Access until: {assignment.expiresAt.toLocaleDateString()}
                   </div>
                 </div>
-              ))
+                )
+              )
             ) : (
               <p className="text-sm text-muted-foreground">No assigned patients</p>
             )}
@@ -114,7 +120,8 @@ export default async function NurseDashboard({ user }: NurseDashboardProps) {
         <CardContent>
           <div className="space-y-3">
             {recentActivity.length > 0 ? (
-              recentActivity.map((activity) => (
+              recentActivity.map(
+                (activity: { id: string; action: string; timestamp: Date }) => (
                 <div
                   key={activity.id}
                   className="flex items-start gap-3 border-s-2 border-primary/20 ps-3"
@@ -127,7 +134,8 @@ export default async function NurseDashboard({ user }: NurseDashboardProps) {
                     </p>
                   </div>
                 </div>
-              ))
+                )
+              )
             ) : (
               <p className="text-sm text-muted-foreground">No recent activity</p>
             )}

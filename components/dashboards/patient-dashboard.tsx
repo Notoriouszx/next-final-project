@@ -94,7 +94,13 @@ export default async function PatientDashboard({ user }: PatientDashboardProps) 
           <CardContent>
             <div className="space-y-3">
               {myRecords.length > 0 ? (
-                myRecords.map((record) => (
+                myRecords.map(
+                  (record: {
+                    id: string;
+                    fileName: string | null;
+                    description: string | null;
+                    createdAt: Date;
+                  }) => (
                   <div
                     key={record.id}
                     className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
@@ -112,7 +118,8 @@ export default async function PatientDashboard({ user }: PatientDashboardProps) 
                       </p>
                     </div>
                   </div>
-                ))
+                  )
+                )
               ) : (
                 <div className="py-6 text-center">
                   <FileText className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
@@ -141,7 +148,13 @@ export default async function PatientDashboard({ user }: PatientDashboardProps) 
           <CardContent>
             <div className="space-y-3">
               {activeGrants.length > 0 ? (
-                activeGrants.map((grant) => {
+                activeGrants.map((grant: {
+                  id: string;
+                  doctorId: string | null;
+                  expiresAt: Date;
+                  doctor: { name: string } | null;
+                  nurse: { name: string } | null;
+                }) => {
                   const provider = grant.doctor ?? grant.nurse;
                   return (
                     <div

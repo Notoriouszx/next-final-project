@@ -9,6 +9,16 @@ const secret =
   "development-only-secret-min-32-chars-long!!";
 
 export const auth = betterAuth({
+
+
+    trustedOrigins: [
+    process.env.NEXT_PUBLIC_APP_URL!,
+    ...(process.env.VERCEL_URL
+      ? [`https://${process.env.VERCEL_URL}`]
+      : [])
+  ],
+  
+
   appName: "E-HealthCare",
   baseURL:
     process.env.BETTER_AUTH_URL ??

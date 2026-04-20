@@ -31,24 +31,29 @@ export function AdminCharts({ userGrowth, recordsPerDay }: AdminChartsProps) {
             <AreaChart data={userGrowth}>
               <defs>
                 <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.38} />
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={32} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                width={32}
+              />
               <Tooltip
                 contentStyle={{
                   borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
+                  border: "1px solid #334155",
+                  background: "#0f172a",
+                  color: "#f8fafc",
                 }}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="hsl(var(--primary))"
+                stroke="#22c55e"
                 fillOpacity={1}
                 fill="url(#colorUsers)"
                 strokeWidth={2}
@@ -66,20 +71,26 @@ export function AdminCharts({ userGrowth, recordsPerDay }: AdminChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={recordsPerDay}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={32} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                width={32}
+              />
               <Tooltip
                 contentStyle={{
                   borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
+                  border: "1px solid #334155",
+                  background: "#0f172a",
+                  color: "#f8fafc",
                 }}
               />
               <Bar
                 dataKey="value"
-                fill="hsl(var(--primary))"
-                radius={[6, 6, 0, 0]}
-                opacity={0.9}
+                fill="#22c55e"
+                radius={[8, 8, 0, 0]}
+                opacity={0.95}
+                className="transition-all hover:brightness-110"
               />
             </BarChart>
           </ResponsiveContainer>

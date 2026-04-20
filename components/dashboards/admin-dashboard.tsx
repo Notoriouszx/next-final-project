@@ -6,19 +6,15 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Users,
-  Activity,
-  FileText,
-  UserPlus,
-  TrendingUp,
-  CircleAlert as AlertCircle,
-} from "lucide-react";
+import { Activity, CircleAlert as AlertCircle } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { AdminCharts } from "./admin-charts";
+import { AdminStatsCards } from "./admin-stats-cards";
+import { Link } from "@/i18n/navigation";
 
 interface AdminDashboardProps {
   user: User;
+  periodDays?: 7 | 30 | 90;
 }
 
 function buildDayAxis(days: number) {
@@ -46,9 +42,21 @@ function countsPerDay(dates: Date[], axis: { key: string; label: string }[]) {
   return axis.map((a) => ({ label: a.label, value: map.get(a.key) ?? 0 }));
 }
 
-export default async function AdminDashboard({ user }: AdminDashboardProps) {
-  const axis = buildDayAxis(14);
+export default async function AdminDashboard({
+  user,
+  periodDays = 30,
+}: AdminDashboardProps) {
+  const axis = buildDayAxis(periodDays);
   const since = new Date(axis[0].key);
+
+  const now = new Date();
+  const currentStart = new Date(now);
+  currentStart.setDate(now.getDate() - periodDays);
+  const previousStart = new Date(now);
+  previousStart.setDate(now.getDate() - periodDays * 2);
+
+  const currentRange = { gte: currentStart, lt: now };
+  const previousRange = { gte: previousStart, lt: currentStart };
 
   const [
     totalUsers,
@@ -60,10 +68,12 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
     usersInRange,
     recordsInRange,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "doctor" } }),
-    prisma.medicalRecord.count(),
-    prisma.user.count({ where: { role: "patient" } }),
+    prisma.user.count({ where: { createdAt: currentRange } }),
+    prisma.user.count({
+      where: { role: "doctor", isActive: true, createdAt: currentRange },
+    }),
+    prisma.medicalRecord.count({ where: { createdAt: currentRange } }),
+    prisma.user.count({ where: { role: "patient", createdAt: currentRange } }),
     prisma.auditLog.findMany({
       orderBy: { timestamp: "desc" },
       take: 10,
@@ -91,34 +101,59 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
     axis
   );
 
+  const [prevUsers, prevDoctors, prevPatients, prevRecords] = await Promise.all([
+    prisma.user.count({ where: { createdAt: previousRange } }),
+    prisma.user.count({
+      where: { role: "doctor", isActive: true, createdAt: previousRange },
+    }),
+    prisma.user.count({ where: { role: "patient", createdAt: previousRange } }),
+    prisma.medicalRecord.count({ where: { createdAt: previousRange } }),
+  ]);
+
+  const formatChange = (current: number, previous: number) => {
+    if (previous === 0) {
+      return current > 0 ? "+100%" : "0%";
+    }
+    const value = ((current - previous) / previous) * 100;
+    const rounded = Math.round(value * 10) / 10;
+    return `${rounded > 0 ? "+" : ""}${rounded}%`;
+  };
+
+  const analytics = {
+    totalUsers: { value: totalUsers, change: formatChange(totalUsers, prevUsers) },
+    doctors: { value: totalDoctors, change: formatChange(totalDoctors, prevDoctors) },
+    patients: { value: totalPatients, change: formatChange(totalPatients, prevPatients) },
+    records: { value: totalRecords, change: formatChange(totalRecords, prevRecords) },
+  };
+
   const stats = [
     {
       title: "Total Users",
-      value: totalUsers,
-      icon: Users,
-      description: "All registered users",
-      trend: "+12.5%",
+      value: analytics.totalUsers.value,
+      iconKey: "users" as const,
+      description: `Created in last ${periodDays} days`,
+      trend: analytics.totalUsers.change,
     },
     {
       title: "Active Doctors",
-      value: totalDoctors,
-      icon: Activity,
-      description: "Verified doctors",
-      trend: "+4.2%",
+      value: analytics.doctors.value,
+      iconKey: "doctors" as const,
+      description: "Active doctors in selected period",
+      trend: analytics.doctors.change,
     },
     {
       title: "Medical Records",
-      value: totalRecords,
-      icon: FileText,
-      description: "Total records uploaded",
-      trend: "+23.1%",
+      value: analytics.records.value,
+      iconKey: "records" as const,
+      description: "Records uploaded in selected period",
+      trend: analytics.records.change,
     },
     {
       title: "Patients",
-      value: totalPatients,
-      icon: UserPlus,
-      description: "Registered patients",
-      trend: "+8.7%",
+      value: analytics.patients.value,
+      iconKey: "patients" as const,
+      description: "New patients in selected period",
+      trend: analytics.patients.change,
     },
   ];
 
@@ -129,27 +164,23 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
         <p className="text-muted-foreground">Welcome back, {user.name}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.title} className="border-primary/10 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-                <div className="mt-2 flex items-center text-xs text-emerald-600 dark:text-emerald-400">
-                  <TrendingUp className="me-1 h-3 w-3" />
-                  {stat.trend} from last month
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="flex items-center gap-2">
+        {[7, 30, 90].map((days) => (
+          <Link
+            key={days}
+            href={{ pathname: "/dashboard", query: { period: String(days) } }}
+            className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              periodDays === days
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input hover:bg-accent"
+            }`}
+          >
+            {days}d
+          </Link>
+        ))}
       </div>
+
+      <AdminStatsCards stats={stats} periodLabel={`${periodDays} days`} />
 
       <AdminCharts userGrowth={userGrowth} recordsPerDay={recordsPerDay} />
 
@@ -206,7 +237,7 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">New registrations</p>
                   <p className="text-xs text-muted-foreground">
-                    {totalUsers} total accounts in the system.
+                    {analytics.totalUsers.value} new accounts in selected period.
                   </p>
                 </div>
               </div>
@@ -215,7 +246,7 @@ export default async function AdminDashboard({ user }: AdminDashboardProps) {
         </Card>
       </div>
 
-      <Card className="border-primary/10 shadow-sm">
+      <Card className="border-primary/10 shadow-sm transition-all duration-300 hover:shadow-md">
         <CardHeader>
           <CardTitle>Recent Users</CardTitle>
           <CardDescription>Latest user registrations</CardDescription>

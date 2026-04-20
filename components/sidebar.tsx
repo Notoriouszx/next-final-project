@@ -95,7 +95,7 @@ export function Sidebar({ role }: SidebarProps) {
             <Activity className="h-4 w-4 text-primary" />
             MediCare
           </div>
-          <p className="mt-1 leading-relaxed">Secure health portal — v1</p>
+          <p className="mt-1 leading-relaxed">Secure health portal — v1.1</p>
         </div>
       </div>
     </aside>

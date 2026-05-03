@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { deleteUser } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-auth";
+import { emitRealtime } from "@/lib/realtime";
 
 export async function DELETE(
   request: NextRequest,
@@ -18,6 +19,10 @@ export async function DELETE(
       { id },
       { id: authState.session.user.id, email: authState.session.user.email }
     );
+    await emitRealtime("admin:users_updated", ["admin"], {
+      kind: "user_deleted",
+      targetUserId: id,
+    });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ZodError) {

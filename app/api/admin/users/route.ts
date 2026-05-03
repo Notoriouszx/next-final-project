@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getUsers, updateUser } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-auth";
+import { emitRealtime } from "@/lib/realtime";
 
 export async function GET(request: NextRequest) {
   const authState = await requireAdmin(request);
@@ -39,6 +40,10 @@ export async function PATCH(request: NextRequest) {
     const updated = await updateUser(body, {
       id: authState.session.user.id,
       email: authState.session.user.email,
+    });
+    await emitRealtime("admin:users_updated", ["admin"], {
+      kind: "user_updated",
+      targetUserId: updated.id,
     });
     return NextResponse.json(updated);
   } catch (error) {

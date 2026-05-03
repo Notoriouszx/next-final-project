@@ -14,9 +14,10 @@ interface NurseDashboardProps {
 }
 
 export default async function NurseDashboard({ user }: NurseDashboardProps) {
+  const now = new Date();
   const [assignedPatients, recentActivity] = await Promise.all([
     prisma.accessGrant.findMany({
-      where: { nurseId: user.id, status: "active" },
+      where: { nurseId: user.id, status: "active", expiresAt: { gt: now } },
       include: { patient: true },
     }),
     prisma.auditLog.findMany({

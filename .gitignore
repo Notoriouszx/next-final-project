@@ -20,6 +20,10 @@
 # production
 /build
 
+# local uploads (dev)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # misc
 .DS_Store
 *.pem

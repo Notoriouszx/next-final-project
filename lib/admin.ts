@@ -101,6 +101,7 @@ export async function updateUser(rawInput: unknown, actor: Actor) {
   await writeAuditLog({
     userId: actor.id,
     action: "admin_user_updated",
+    category: "UPDATE",
     details: { targetUserId: input.id, role: input.role, isActive: input.isActive },
   });
 
@@ -119,6 +120,7 @@ export async function deleteUser(rawInput: unknown, actor: Actor) {
   await writeAuditLog({
     userId: actor.id,
     action: "admin_user_soft_deleted",
+    category: "DELETE",
     details: { targetUserId: input.id },
   });
 
@@ -156,6 +158,7 @@ export async function createStaff(
   await writeAuditLog({
     userId: actor.id,
     action: role === "doctor" ? "admin_doctor_added" : "admin_nurse_added",
+    category: "CREATE",
     details: {
       targetUserId: created.id,
       username: input.username,

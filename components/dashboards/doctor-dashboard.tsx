@@ -19,9 +19,10 @@ interface DoctorDashboardProps {
 }
 
 export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
+  const now = new Date();
   const [accessGrants, pendingRequests, patientIds] = await Promise.all([
     prisma.accessGrant.findMany({
-      where: { doctorId: user.id, status: "active" },
+      where: { doctorId: user.id, status: "active", expiresAt: { gt: now } },
       include: { patient: true },
     }),
     prisma.accessGrant.findMany({
@@ -30,7 +31,7 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
     }),
     prisma.accessGrant
       .findMany({
-        where: { doctorId: user.id, status: "active" },
+        where: { doctorId: user.id, status: "active", expiresAt: { gt: now } },
         select: { patientId: true },
       })
       .then(

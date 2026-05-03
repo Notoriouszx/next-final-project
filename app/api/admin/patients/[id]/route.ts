@@ -80,6 +80,7 @@ export async function POST(
     await writeAuditLog({
       userId: authState.session.user.id,
       action: "admin_patient_access_revoked",
+      category: "SECURITY",
       details: { patientId: id, grantId: body.grantId },
     });
     return NextResponse.json({ ok: true });
@@ -101,6 +102,7 @@ export async function POST(
     await writeAuditLog({
       userId: authState.session.user.id,
       action: "admin_patient_magic_link_generated",
+      category: "SECURITY",
       details: { patientId: id, grantId: grant.id },
     });
     return NextResponse.json({

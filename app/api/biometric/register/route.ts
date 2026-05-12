@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     await writeAuditLog({
       userId,
       action: "biometric_registration",
+      category: "SECURITY",
       details: { all_verified: true },
       ipAddress: request.headers.get("x-forwarded-for"),
       userAgent: request.headers.get("user-agent"),

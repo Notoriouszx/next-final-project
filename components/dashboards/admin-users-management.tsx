@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,6 +27,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { roleBadgeVariant } from "@/lib/role-badge";
 
 type UserItem = {
   id: string;
@@ -97,16 +105,6 @@ export function AdminUsersManagement() {
     };
     fetchUsers();
   }, [page, role, search, status]);
-
-  const roleVariant = useMemo(
-    () => ({
-      admin: "default",
-      doctor: "success",
-      nurse: "warning",
-      patient: "secondary",
-    }),
-    []
-  );
 
   const openEdit = (user: UserItem) => {
     setSelected(user);
@@ -227,7 +225,7 @@ export function AdminUsersManagement() {
                     <TableCell className="font-medium">{u.name}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <Badge variant={roleVariant[u.role] as "default"} className="capitalize">
+                      <Badge variant={roleBadgeVariant(u.role)} className="capitalize">
                         {u.role}
                       </Badge>
                     </TableCell>
@@ -292,16 +290,20 @@ export function AdminUsersManagement() {
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Role</label>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              <Select
                 value={watchedRole}
-                onChange={(e) => form.setValue("role", e.target.value as FormData["role"])}
+                onValueChange={(v) => form.setValue("role", v as FormData["role"])}
               >
-                <option value="admin">Admin</option>
-                <option value="doctor">Doctor</option>
-                <option value="nurse">Nurse</option>
-                <option value="patient">Patient</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="doctor">Doctor</SelectItem>
+                  <SelectItem value="nurse">Nurse</SelectItem>
+                  <SelectItem value="patient">Patient</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between rounded-md border p-3">
               <label className="text-sm font-medium">Active status</label>
@@ -314,7 +316,7 @@ export function AdminUsersManagement() {
               <Button type="button" variant="outline" onClick={() => setSelected(null)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" variant="success" disabled={submitting}>
                 Save changes
               </Button>
             </DialogFooter>

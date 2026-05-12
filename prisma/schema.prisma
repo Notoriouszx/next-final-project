@@ -107,17 +107,73 @@ model TwoFactor {
 model BiometricAuth {
   id                  String    @id @default(cuid())
   userId              String    @unique
-  faceHash            String?
-  irisHash            String?
-  fingerprintHash     String?
+
+// === ADD these embedding fields ===
+  faceEmbedding       Json?     // 65-dim float array from PCA
+  fingerprintEmbedding Json?    // 65-dim float array from PCA
+  irisEmbedding       Json?     // 50-dim float array from PCA
+   // Quality scores (for quality-aware fusion)
+  faceQuality         Float?
+  fingerprintQuality  Float?
+  irisQuality         Float?
+   // Normalization parameters (store as JSON)
+  normParams          Json?     // Store min/max for each modality
+  
+  // Verification status
   faceVerified        Boolean   @default(false)
   irisVerified        Boolean   @default(false)
   fingerprintVerified Boolean   @default(false)
+  
+  // Versioning for future model updates
+  embeddingVersion    String    @default("v6.1")  // Track which model version
+  pcaVersion          String    @default("v6.1")
+
   verifiedAt          DateTime?
   updatedAt           DateTime  @updatedAt
   user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("biometric_auth")
+}
+
+// NEW: Biometric attempt logs (for security & analytics)
+model BiometricAttempt {
+  id            String    @id @default(cuid())
+  userId        String?
+  success       Boolean
+  confidence    Float?    // Match score (0-1)
+  modalityUsed  String    // 'face', 'fingerprint', 'iris', 'fusion'
+  fusionWeights Json?     // Which weights were used
+  responseTime  Int?      // ms
+  ipAddress     String?
+  userAgent     String?
+  errorMessage  String?   // If failed
+  createdAt     DateTime  @default(now())
+  
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@index([success])
+  @@map("biometric_attempt")
+}
+
+// NEW: Store enrolled biometric samples (for multi-sample per user)
+model BiometricSample {
+  id            String    @id @default(cuid())
+  userId        String
+  modality      String    // 'face', 'fingerprint', 'iris'
+  embedding     Json      // PCA-transformed embedding
+  quality       Float?    // Image quality score
+  isActive      Boolean   @default(true)  // Can disable bad samples
+  capturedAt    DateTime  @default(now())
+  metadata      Json?     // Device info, lighting conditions, etc.
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, modality, isActive])  // One active embedding per modality per user
+  @@index([userId, modality])
+  @@map("biometric_sample")
 }
 
 model MedicalRecord {

@@ -35,6 +35,9 @@ model User {
 
   auditLogs AuditLog[]
 
+  biometricAttempts BiometricAttempt[]
+  biometricSamples  BiometricSample[]
+
   @@unique([email])
   @@map("user")
 }

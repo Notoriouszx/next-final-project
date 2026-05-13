@@ -16,9 +16,15 @@ export interface User {
 export interface BiometricAuth {
   id: string;
   user_id: string;
-  face_hash?: string | null;
-  iris_hash?: string | null;
-  fingerprint_hash?: string | null;
+  face_embedding?: unknown | null;
+  iris_embedding?: unknown | null;
+  fingerprint_embedding?: unknown | null;
+  face_quality?: number | null;
+  iris_quality?: number | null;
+  fingerprint_quality?: number | null;
+  embedding_version?: string;
+  pca_version?: string;
+  norm_params?: unknown | null;
   face_verified: boolean;
   iris_verified: boolean;
   fingerprint_verified: boolean;

@@ -1,13 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useRef, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, FingerprintPattern as Fingerprint, Eye, Scan } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function BiometricContent() {
   const t = useTranslations("Auth");
@@ -21,27 +29,54 @@ function BiometricContent() {
     fingerprint: false,
   });
   const [loading, setLoading] = useState(false);
+  const [activeType, setActiveType] = useState<"face" | "iris" | "fingerprint" | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
 
-  const simulateVerification = async (type: "face" | "iris" | "fingerprint") => {
+  const openPicker = (type: "face" | "iris" | "fingerprint") => {
+    setError(null);
+    setActiveType(type);
+    setDialogOpen(true);
+  };
+
+  const uploadAndVerify = async (files: FileList | null) => {
+    if (!activeType) return;
+    if (!userId) {
+      setError("Missing userId");
+      return;
+    }
+    if (!files || files.length === 0) return;
+
     setLoading(true);
+    setError(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const fd = new FormData();
+    fd.set("userId", userId);
+    fd.set("biometricType", activeType);
+    Array.from(files).forEach((f) => fd.append("files", f, f.name));
 
-    const mockHash = `${type}_hash_${Date.now()}`;
-
-    await fetch("/api/biometric/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        biometricType: type,
-        biometricHash: mockHash,
-        verified: true,
-      }),
-    });
-
-    setVerificationSteps((prev) => ({ ...prev, [type]: true }));
-    setLoading(false);
+    try {
+      const res = await fetch("/api/biometric/verify-upload", { method: "POST", body: fd });
+      const data = (await res.json()) as { verified?: boolean; error?: string };
+      if (!res.ok) {
+        setError(data?.error ?? "Verification failed");
+        return;
+      }
+      if (data.verified) {
+        setVerificationSteps((prev) => ({ ...prev, [activeType]: true }));
+        setDialogOpen(false);
+      } else {
+        setError("Not a match. Please try again with clearer samples.");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Verification failed");
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (folderInputRef.current) folderInputRef.current.value = "";
+    }
   };
 
   useEffect(() => {
@@ -76,7 +111,7 @@ function BiometricContent() {
                 <span className="text-green-600 font-medium">✓ Verified</span>
               ) : (
                 <Button
-                  onClick={() => simulateVerification("face")}
+                  onClick={() => openPicker("face")}
                   disabled={loading}
                   size="sm"
                 >
@@ -97,7 +132,7 @@ function BiometricContent() {
                 <span className="text-green-600 font-medium">✓ Verified</span>
               ) : (
                 <Button
-                  onClick={() => simulateVerification("iris")}
+                  onClick={() => openPicker("iris")}
                   disabled={loading || !verificationSteps.face}
                   size="sm"
                 >
@@ -118,7 +153,7 @@ function BiometricContent() {
                 <span className="text-green-600 font-medium">✓ Verified</span>
               ) : (
                 <Button
-                  onClick={() => simulateVerification("fingerprint")}
+                  onClick={() => openPicker("fingerprint")}
                   disabled={loading || !verificationSteps.iris}
                   size="sm"
                 >
@@ -135,6 +170,70 @@ function BiometricContent() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload biometric sample</DialogTitle>
+            <DialogDescription>
+              Choose one or more files, or select a folder, to scan & verify your{" "}
+              <span className="font-medium">{activeType ?? "biometric"}</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          {error ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="grid gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => void uploadAndVerify(e.target.files)}
+            />
+            <input
+              ref={folderInputRef}
+              type="file"
+              multiple
+              // @ts-expect-error - non-standard but widely supported (Chromium/Edge)
+              webkitdirectory=""
+              className="hidden"
+              onChange={(e) => void uploadAndVerify(e.target.files)}
+            />
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+              <Button
+                type="button"
+                variant="default"
+                disabled={loading}
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full"
+              >
+                Choose file(s)
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={loading}
+                onClick={() => folderInputRef.current?.click()}
+                className="w-full"
+              >
+                Choose folder
+              </Button>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" disabled={loading} onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

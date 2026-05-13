@@ -1,10 +1,7 @@
+// app/api/biometric/verify-upload/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  buildPayloadForModality,
-  fileToDataUrl,
-  runExternalJsonVerify,
-} from "@/lib/biometric-verify-service";
+import { fileToDataUrl } from "@/lib/biometric-verify-service";
 
 const formSchema = z.object({
   userId: z.string().min(1),
@@ -27,41 +24,77 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
-    // One data URL per request for this modality (first file chosen; extra files ignored).
+    // Convert the file to base64 data URL
     const dataUrl = await fileToDataUrl(files[0]);
-    const payload = buildPayloadForModality(parsed.data.userId, parsed.data.biometricType, dataUrl);
-
-    const { res, verified, confidence, quality, embedding, raw, upstreamUrl } =
-      await runExternalJsonVerify(payload, request, {
-        modality: parsed.data.biometricType,
-        auditAction: `biometric_verify_upload_${parsed.data.biometricType}`,
-        filesCount: files.length,
-      });
-
-    if (!res.ok) {
+    
+    // Build payload with ALL three fields (matching your Python backend's expected format)
+    const payload: any = {
+      user_id: parseInt(userId, 10), // Convert to integer as your backend expects
+      face_image: null,
+      fingerprint_image: null,
+      iris_image: null,
+    };
+    
+    // Set the appropriate image based on biometric type
+    if (biometricType === 'face') {
+      payload.face_image = dataUrl;
+    } else if (biometricType === 'fingerprint') {
+      payload.fingerprint_image = dataUrl;
+    } else if (biometricType === 'iris') {
+      payload.iris_image = dataUrl;
+    }
+    
+    // Get the API URL from environment
+    const apiUrl = process.env.BIOMETRIC_VERIFY_URL || 
+                   process.env.BIOMETRIC_API_URL + '/api/verify' ||
+                   'https://biometric-auth-service.onrender.com/api/verify';
+    
+    console.log('Calling backend verify at:', apiUrl);
+    console.log('Payload:', { ...payload, face_image: payload.face_image ? 'present' : null });
+    
+    // Call your Python backend
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    const rawResponse = await response.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(rawResponse);
+    } catch {
+      responseData = rawResponse;
+    }
+    
+    if (!response.ok) {
+      console.error('Backend error:', response.status, rawResponse);
       return NextResponse.json(
         {
           error: "Biometric service error",
-          upstream: { url: upstreamUrl, status: res.status, body: raw },
-          hint:
-            "Set BIOMETRIC_VERIFY_URL in Vercel to the exact REST endpoint that accepts JSON { user_id, face_image, iris_image, fingerprint_image } (base64 data URLs). " +
-            "Your Render app returns 404 for /api/verify; it may use a different path or only GraphQL.",
+          upstream: { url: apiUrl, status: response.status, body: rawResponse },
+          hint: "Make sure your Python backend has the /api/verify endpoint and is running",
         },
         { status: 502 }
       );
     }
-
+    
+    // Return the response in the format your frontend expects
     return NextResponse.json({
-      verified,
-      confidence,
-      quality,
-      upstream: { url: upstreamUrl },
-      raw,
+      verified: responseData.verified || responseData.verified === true,
+      confidence: responseData.confidence || 0,
+      quality: responseData.quality || {},
+      embedding: responseData.embedding,
+      raw: responseData,
+      upstream: { url: apiUrl },
     });
+    
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     const isConfig = /BIOMETRIC_VERIFY|BIOMETRIC_API_URL/i.test(message);
-    console.error(error);
+    console.error('Verification error:', error);
     return NextResponse.json({ error: message }, { status: isConfig ? 503 : 500 });
   }
 }

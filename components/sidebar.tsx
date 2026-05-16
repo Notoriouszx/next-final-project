@@ -67,7 +67,7 @@ export function Sidebar({ role }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "group/sbar fixed start-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-16 flex-col overflow-hidden border-e border-primary/10 bg-background/95 backdrop-blur transition-[width] duration-300 ease-in-out hover:w-64"
+        "peer/sbar group/sbar fixed start-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-16 flex-col overflow-hidden border-e border-primary/10 bg-background/95 backdrop-blur transition-[width] duration-300 ease-in-out hover:w-64"
       )}
     >
       <div className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden p-3">

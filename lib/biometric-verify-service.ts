@@ -23,6 +23,17 @@ function getApiBase() {
  * Prefer a full URL (Vercel env: BIOMETRIC_VERIFY_URL).
  * Otherwise BIOMETRIC_API_URL + BIOMETRIC_VERIFY_PATH (path must include leading /).
  */
+export function resolveBiometricEnrollUrl(): string {
+  const full = process.env.BIOMETRIC_ENROLL_URL?.trim();
+  if (full) {
+    return full.replace(/\/+$/, "");
+  }
+  const base = getApiBase();
+  const path = process.env.BIOMETRIC_ENROLL_PATH?.trim() || "/api/v1/enroll";
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalized}`;
+}
+
 export function resolveBiometricVerifyUrl(): string {
   const full = process.env.BIOMETRIC_VERIFY_URL?.trim();
   if (full) {
@@ -76,6 +87,34 @@ export function buildPayloadFromImages(input: {
     iris_image: input.iris_image ?? null,
     fingerprint_image: input.fingerprint_image ?? null,
   };
+}
+
+export type BiometricEnrollPayload = BiometricImagePayload;
+
+export type BiometricEnrollResult = {
+  success: boolean;
+  user_id?: string;
+  message?: string;
+  embeddings?: Record<string, number[]>;
+};
+
+export async function postBiometricEnrollJson(
+  payload: BiometricEnrollPayload
+): Promise<{ res: Response; data: BiometricEnrollResult | null; text: string }> {
+  const url = resolveBiometricEnrollUrl();
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text();
+  let data: BiometricEnrollResult | null = null;
+  try {
+    data = text ? (JSON.parse(text) as BiometricEnrollResult) : null;
+  } catch {
+    data = null;
+  }
+  return { res, data, text };
 }
 
 export async function postBiometricVerifyJson(payload: BiometricImagePayload): Promise<Response> {
@@ -269,4 +308,77 @@ export async function runExternalJsonVerify(
   });
 
   return { res, verified, confidence, quality, embedding, raw, upstreamUrl };
+}
+
+export async function persistBiometricEnrollment(opts: {
+  userId: string;
+  embeddings: Record<string, number[]>;
+  request: NextRequest;
+  auditAction?: string;
+}) {
+  const { userId, embeddings, request, auditAction = "biometric_enrollment" } = opts;
+  const ipAddress = request.headers.get("x-forwarded-for");
+  const userAgent = request.headers.get("user-agent");
+
+  const modalities = Object.keys(embeddings) as BiometricModality[];
+  const faceEmbedding = embeddings.face;
+  const irisEmbedding = embeddings.iris;
+  const fingerprintEmbedding = embeddings.fingerprint;
+
+  const existing = await prisma.biometricAuth.findUnique({ where: { userId } });
+
+  const nextFaceVerified = faceEmbedding ? true : (existing?.faceVerified ?? false);
+  const nextIrisVerified = irisEmbedding ? true : (existing?.irisVerified ?? false);
+  const nextFingerprintVerified = fingerprintEmbedding
+    ? true
+    : (existing?.fingerprintVerified ?? false);
+  const allVerified = nextFaceVerified && nextIrisVerified && nextFingerprintVerified;
+
+  await prisma.biometricAuth.upsert({
+    where: { userId },
+    create: {
+      userId,
+      ...(faceEmbedding ? { faceEmbedding } : {}),
+      ...(irisEmbedding ? { irisEmbedding } : {}),
+      ...(fingerprintEmbedding ? { fingerprintEmbedding } : {}),
+      faceVerified: nextFaceVerified,
+      irisVerified: nextIrisVerified,
+      fingerprintVerified: nextFingerprintVerified,
+      verifiedAt: allVerified ? new Date() : null,
+    },
+    update: {
+      ...(faceEmbedding ? { faceEmbedding, faceVerified: true } : {}),
+      ...(irisEmbedding ? { irisEmbedding, irisVerified: true } : {}),
+      ...(fingerprintEmbedding ? { fingerprintEmbedding, fingerprintVerified: true } : {}),
+      verifiedAt: allVerified ? new Date() : undefined,
+    },
+  });
+
+  await Promise.all(
+    modalities.map((modality) =>
+      prisma.biometricSample.upsert({
+        where: {
+          userId_modality_isActive: { userId, modality, isActive: true },
+        },
+        create: {
+          userId,
+          modality,
+          embedding: embeddings[modality] as never,
+          isActive: true,
+        },
+        update: {
+          embedding: embeddings[modality] as never,
+        },
+      })
+    )
+  );
+
+  await writeAuditLog({
+    userId,
+    action: auditAction,
+    category: "SECURITY",
+    details: { modalities, all_verified: allVerified },
+    ipAddress,
+    userAgent,
+  });
 }

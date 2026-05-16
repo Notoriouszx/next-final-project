@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -66,6 +66,10 @@ export function AdminUsersManagement() {
   const [selected, setSelected] = useState<UserItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [enrollMessage, setEnrollMessage] = useState<string | null>(null);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [enrolling, setEnrolling] = useState(false);
+  const credentialsInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -108,12 +112,57 @@ export function AdminUsersManagement() {
 
   const openEdit = (user: UserItem) => {
     setSelected(user);
+    setEnrollMessage(null);
+    setEnrollError(null);
     form.reset({
       id: user.id,
       name: user.name,
       role: user.role,
       isActive: user.isActive,
     });
+  };
+
+  const onCredentialsSelected = async (files: FileList | null) => {
+    if (!selected || !files?.length) return;
+    setEnrolling(true);
+    setEnrollMessage(null);
+    setEnrollError(null);
+
+    const fd = new FormData();
+    Array.from(files).forEach((file) => {
+      const lower = file.name.toLowerCase();
+      if (lower.includes("face")) fd.append("face", file, file.name);
+      else if (lower.includes("iris") || lower.includes("eye")) fd.append("iris", file, file.name);
+      else if (lower.includes("finger") || lower.includes("print"))
+        fd.append("fingerprint", file, file.name);
+      else fd.append("files", file, file.name);
+    });
+
+    try {
+      const res = await fetch(`/api/admin/users/${selected.id}/biometric-enroll`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = (await res.json()) as {
+        success?: boolean;
+        message?: string;
+        modalities?: string[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setEnrollError(data?.error ?? "Failed to upload biometric credentials");
+        return;
+      }
+      setEnrollMessage(
+        data.message ??
+          `Credentials stored${data.modalities?.length ? ` (${data.modalities.join(", ")})` : ""}.`
+      );
+    } catch (e) {
+      setEnrollError(e instanceof Error ? e.message : "Failed to upload biometric credentials");
+    } finally {
+      setEnrolling(false);
+      if (credentialsInputRef.current) credentialsInputRef.current.value = "";
+    }
   };
 
   const onUpdate = form.handleSubmit(async (values) => {
@@ -312,6 +361,33 @@ export function AdminUsersManagement() {
                 onCheckedChange={(checked: boolean) => form.setValue("isActive", checked)}
               />
             </div>
+
+            <div className="space-y-2 rounded-md border border-dashed p-3">
+              <p className="text-sm font-medium">Biometric credentials</p>
+              <p className="text-xs text-muted-foreground">
+                Upload reference images for this user (face, iris, fingerprint). Name files with
+                face, iris, or finger so they map correctly.
+              </p>
+              <input
+                ref={credentialsInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => void onCredentialsSelected(e.target.files)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={enrolling || submitting}
+                onClick={() => credentialsInputRef.current?.click()}
+              >
+                {enrolling ? "Uploading…" : "Upload credentials"}
+              </Button>
+              {enrollMessage ? <p className="text-xs text-green-600">{enrollMessage}</p> : null}
+              {enrollError ? <p className="text-xs text-destructive">{enrollError}</p> : null}
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setSelected(null)}>
                 Cancel

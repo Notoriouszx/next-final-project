@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { biometricStatusBadge, resolveBiometricStatus } from "@/lib/biometric-status";
 
 const addNurseSchema = z.object({
   name: z.string().min(2),
@@ -21,6 +22,8 @@ type NurseItem = {
   id: string;
   name: string;
   email: string;
+  enrolled: boolean;
+  verified: boolean;
   assignedDoctors: number;
   isActive: boolean;
   lastActivity: string | null;
@@ -96,6 +99,7 @@ export function AdminNursesPanel() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Assigned doctors</TableHead>
+                  <TableHead>Biometric Status</TableHead>
                   <TableHead>Activity status</TableHead>
                   <TableHead>Last activity</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -107,6 +111,14 @@ export function AdminNursesPanel() {
                     <TableCell className="font-medium">{nurse.name}</TableCell>
                     <TableCell>{nurse.email}</TableCell>
                     <TableCell>{nurse.assignedDoctors}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const badge = biometricStatusBadge(
+                          resolveBiometricStatus({ enrolled: nurse.enrolled, verified: nurse.verified })
+                        );
+                        return <Badge variant={badge.variant}>{badge.label}</Badge>;
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={nurse.isActive ? "success" : "destructive"}>
                         {nurse.isActive ? "active" : "inactive"}

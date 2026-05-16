@@ -7,6 +7,7 @@ import {
   persistBiometricEnrollment,
   postBiometricEnrollJson,
 } from "@/lib/biometric-verify-service";
+import { enrollUserLocally } from "@/lib/biometric-local-service";
 
 type Modality = "face" | "iris" | "fingerprint";
 
@@ -18,27 +19,45 @@ function inferModality(file: File, fieldName: string): Modality | null {
   return null;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest) {
+  // #region agent log
+  fetch("http://127.0.0.1:7440/ingest/e2a01d83-0a9f-476b-8c9e-61fa3d3a3a79", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e23d66" },
+    body: JSON.stringify({
+      sessionId: "e23d66",
+      runId: "enroll-fix",
+      hypothesisId: "H-route",
+      location: "admin/biometric-enroll/route.ts:POST:entry",
+      message: "flat enroll route hit",
+      data: { url: request.url },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
   const authState = await requireAdmin(request);
   if ("error" in authState) {
     return NextResponse.json({ error: authState.error }, { status: authState.status });
   }
 
   try {
-    const { id: userId } = await params;
+    const fd = await request.formData();
+    const userId = String(fd.get("userId") ?? "").trim();
+    if (!userId) {
+      return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const fd = await request.formData();
     const images: Partial<Record<"face_image" | "iris_image" | "fingerprint_image", string>> = {};
     const unassigned: File[] = [];
 
     for (const [key, value] of fd.entries()) {
+      if (key === "userId") continue;
       if (!(value instanceof File) || value.size === 0) continue;
       const modality =
         (["face", "iris", "fingerprint"] as const).includes(key as Modality)
@@ -73,7 +92,10 @@ export async function POST(
 
     if (Object.keys(images).length === 0) {
       return NextResponse.json(
-        { error: "No biometric files provided. Use fields face, iris, fingerprint or name files accordingly." },
+        {
+          error:
+            "No biometric files provided. Use fields face, iris, fingerprint or name files accordingly.",
+        },
         { status: 400 }
       );
     }
@@ -91,10 +113,10 @@ export async function POST(
       headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e23d66" },
       body: JSON.stringify({
         sessionId: "e23d66",
-        runId: "enroll",
-        hypothesisId: "H-enroll",
-        location: "biometric-enroll/route.ts:POST",
-        message: "admin enroll",
+        runId: "enroll-fix",
+        hypothesisId: "H-payload",
+        location: "admin/biometric-enroll/route.ts:POST:payload",
+        message: "enroll payload ready",
         data: { userId, modalities: Object.keys(images) },
         timestamp: Date.now(),
       }),
@@ -103,29 +125,77 @@ export async function POST(
 
     const { res, data, text } = await postBiometricEnrollJson(payload);
 
-    if (!res.ok || !data?.success) {
-      return NextResponse.json(
-        {
-          error: data?.message ?? "Biometric enrollment failed",
-          upstream: { status: res.status, body: data ?? text },
+    // #region agent log
+    fetch("http://127.0.0.1:7440/ingest/e2a01d83-0a9f-476b-8c9e-61fa3d3a3a79", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e23d66" },
+      body: JSON.stringify({
+        sessionId: "e23d66",
+        runId: "enroll-fix",
+        hypothesisId: "H-upstream",
+        location: "admin/biometric-enroll/route.ts:POST:upstream",
+        message: "python enroll response",
+        data: {
+          ok: res.ok,
+          status: res.status,
+          success: data?.success ?? false,
+          textPreview: text.slice(0, 80),
         },
-        { status: 502 }
-      );
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    let embeddings: Record<string, number[]> = {};
+    let enrollMessage = data?.message ?? "";
+
+    if (res.ok && data?.success && data.embeddings && Object.keys(data.embeddings).length > 0) {
+      embeddings = data.embeddings;
+    } else {
+      const local = await enrollUserLocally(userId, {
+        face_image: images.face_image ?? null,
+        iris_image: images.iris_image ?? null,
+        fingerprint_image: images.fingerprint_image ?? null,
+      });
+      if (!local.success) {
+        return NextResponse.json(
+          {
+            error: local.message,
+            upstream: { status: res.status, body: data ?? text },
+          },
+          { status: 502 }
+        );
+      }
+      embeddings = local.embeddings;
+      enrollMessage = local.message;
     }
 
-    const embeddings = data.embeddings ?? {};
-    if (Object.keys(embeddings).length > 0) {
-      await persistBiometricEnrollment({
-        userId,
-        embeddings,
-        request,
-        auditAction: "admin_biometric_enrollment",
-      });
-    }
+    await persistBiometricEnrollment({
+      userId,
+      embeddings,
+      request,
+      auditAction: "admin_biometric_enrollment",
+    });
+
+    // #region agent log
+    fetch("http://127.0.0.1:7440/ingest/e2a01d83-0a9f-476b-8c9e-61fa3d3a3a79", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e23d66" },
+      body: JSON.stringify({
+        sessionId: "e23d66",
+        runId: "enroll-fix",
+        hypothesisId: "H-persist",
+        location: "admin/biometric-enroll/route.ts:POST:done",
+        message: "enroll persisted",
+        data: { userId, modalities: Object.keys(embeddings) },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
 
     return NextResponse.json({
       success: true,
-      message: data.message,
+      message: enrollMessage,
       modalities: Object.keys(embeddings),
     });
   } catch (error) {

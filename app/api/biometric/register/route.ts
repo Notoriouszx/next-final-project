@@ -35,11 +35,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const faceVerified = Boolean(faceEmbedding);
-    const irisVerified = Boolean(irisEmbedding);
-    const fingerprintVerified = Boolean(fingerprintEmbedding);
-    const allVerified = faceVerified && irisVerified && fingerprintVerified;
-
     await prisma.biometricAuth.upsert({
       where: { userId },
       create: {
@@ -52,10 +47,10 @@ export async function POST(request: NextRequest) {
         faceQuality: faceQuality ?? null,
         irisQuality: irisQuality ?? null,
         fingerprintQuality: fingerprintQuality ?? null,
-        faceVerified,
-        irisVerified,
-        fingerprintVerified,
-        verifiedAt: allVerified ? new Date() : null,
+        faceVerified: false,
+        irisVerified: false,
+        fingerprintVerified: false,
+        verifiedAt: null,
         ...(embeddingVersion ? { embeddingVersion } : {}),
         ...(pcaVersion ? { pcaVersion } : {}),
       },
@@ -68,10 +63,6 @@ export async function POST(request: NextRequest) {
         ...(faceQuality !== undefined ? { faceQuality } : {}),
         ...(irisQuality !== undefined ? { irisQuality } : {}),
         ...(fingerprintQuality !== undefined ? { fingerprintQuality } : {}),
-        faceVerified,
-        irisVerified,
-        fingerprintVerified,
-        verifiedAt: allVerified ? new Date() : undefined,
         ...(embeddingVersion ? { embeddingVersion } : {}),
         ...(pcaVersion ? { pcaVersion } : {}),
       },
@@ -113,7 +104,7 @@ export async function POST(request: NextRequest) {
       userId,
       action: "biometric_registration",
       category: "SECURITY",
-      details: { all_verified: allVerified },
+      details: { templates_registered: true },
       ipAddress: request.headers.get("x-forwarded-for"),
       userAgent: request.headers.get("user-agent"),
     });

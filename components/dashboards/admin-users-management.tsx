@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -129,6 +128,7 @@ export function AdminUsersManagement() {
     setEnrollError(null);
 
     const fd = new FormData();
+    fd.set("userId", selected.id);
     Array.from(files).forEach((file) => {
       const lower = file.name.toLowerCase();
       if (lower.includes("face")) fd.append("face", file, file.name);
@@ -139,16 +139,27 @@ export function AdminUsersManagement() {
     });
 
     try {
-      const res = await fetch(`/api/admin/users/${selected.id}/biometric-enroll`, {
+      const res = await fetch("/api/admin/biometric-enroll", {
         method: "POST",
         body: fd,
       });
-      const data = (await res.json()) as {
+      const raw = await res.text();
+      let data: {
         success?: boolean;
         message?: string;
         modalities?: string[];
         error?: string;
       };
+      try {
+        data = raw ? (JSON.parse(raw) as typeof data) : {};
+      } catch {
+        setEnrollError(
+          res.ok
+            ? "Invalid response from server"
+            : raw.slice(0, 120) || `Upload failed (${res.status})`
+        );
+        return;
+      }
       if (!res.ok) {
         setEnrollError(data?.error ?? "Failed to upload biometric credentials");
         return;
@@ -354,14 +365,23 @@ export function AdminUsersManagement() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="space-y-1">
               <label className="text-sm font-medium">Active status</label>
-              <Switch
-                checked={watchedIsActive}
-                onCheckedChange={(checked: boolean) => form.setValue("isActive", checked)}
-              />
+              <Select
+                value={watchedIsActive ? "active" : "inactive"}
+                onValueChange={(v) => form.setValue("isActive", v === "active")}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
+            {(watchedRole === "doctor" || watchedRole === "nurse") && (
             <div className="space-y-2 rounded-md border border-dashed p-3">
               <p className="text-sm font-medium">Biometric credentials</p>
               <p className="text-xs text-muted-foreground">
@@ -387,6 +407,7 @@ export function AdminUsersManagement() {
               {enrollMessage ? <p className="text-xs text-green-600">{enrollMessage}</p> : null}
               {enrollError ? <p className="text-xs text-destructive">{enrollError}</p> : null}
             </div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setSelected(null)}>
@@ -405,7 +426,8 @@ export function AdminUsersManagement() {
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              This performs a soft delete and sets the user status to inactive.
+              This permanently deletes the user and all of their biometric data, sessions, and role-specific
+              access grants. Other patients&apos; records are not affected.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

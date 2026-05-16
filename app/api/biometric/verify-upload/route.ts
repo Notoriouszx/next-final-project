@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   buildPayloadFromImages,
+  evaluateBiometricVerifyResult,
   fileToDataUrl,
   runExternalJsonVerify,
 } from "@/lib/biometric-verify-service";
@@ -77,6 +78,32 @@ export async function POST(request: NextRequest) {
       filesCount: count,
     });
 
+    const evaluated = evaluateBiometricVerifyResult(raw);
+
+    // #region agent log
+    fetch("http://127.0.0.1:7440/ingest/e2a01d83-0a9f-476b-8c9e-61fa3d3a3a79", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e23d66" },
+      body: JSON.stringify({
+        sessionId: "e23d66",
+        runId: "verify-strict",
+        hypothesisId: "H-scores",
+        location: "verify-upload/route.ts:POST:result",
+        message: "verify evaluation",
+        data: {
+          userId: parsed.data.userId,
+          upstreamOk: res.ok,
+          verified,
+          evaluatedVerified: evaluated.verified,
+          confidence: evaluated.confidence,
+          scores: evaluated.scores,
+          upstreamVerified: evaluated.upstreamVerified,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     if (!res.ok) {
       return NextResponse.json(
         {
@@ -87,9 +114,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!allModalities) {
+      return NextResponse.json(
+        { error: "Submit face, iris, and fingerprint together for verification." },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({
       verified,
       confidence,
+      scores: evaluated.scores,
       raw,
       upstream: { url: upstreamUrl },
     });

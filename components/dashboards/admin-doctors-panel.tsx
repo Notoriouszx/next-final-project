@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { biometricStatusBadge, resolveBiometricStatus } from "@/lib/biometric-status";
 
 const addDoctorSchema = z.object({
   name: z.string().min(2),
@@ -23,10 +24,12 @@ type DoctorItem = {
   id: string;
   name: string;
   email: string;
+  enrolled: boolean;
   verified: boolean;
   patientsCount: number;
   lastActivity: string | null;
 };
+
 type DoctorProfile = {
   assignedPatients: Array<{ id: string; name: string; email: string; grantedAt: string }>;
   accessLogs: Array<{ id: string; action: string; timestamp: string }>;
@@ -98,7 +101,7 @@ export function AdminDoctorsPanel() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Verified</TableHead>
+                  <TableHead>Biometric Status</TableHead>
                   <TableHead>Patients count</TableHead>
                   <TableHead>Last activity</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -110,9 +113,12 @@ export function AdminDoctorsPanel() {
                     <TableCell className="font-medium">{doctor.name}</TableCell>
                     <TableCell>{doctor.email}</TableCell>
                     <TableCell>
-                      <Badge variant={doctor.verified ? "success" : "warning"}>
-                        {doctor.verified ? "verified" : "pending"}
-                      </Badge>
+                      {(() => {
+                        const badge = biometricStatusBadge(
+                          resolveBiometricStatus({ enrolled: doctor.enrolled, verified: doctor.verified })
+                        );
+                        return <Badge variant={badge.variant}>{badge.label}</Badge>;
+                      })()}
                     </TableCell>
                     <TableCell>{doctor.patientsCount}</TableCell>
                     <TableCell>

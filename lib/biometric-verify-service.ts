@@ -134,20 +134,57 @@ function parseUpstreamJson(text: string): unknown {
   }
 }
 
-export function interpretVerifyResponse(res: Response, json: unknown, text: string) {
-  const o = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
-  const verified =
-    typeof o.verified === "boolean"
-      ? o.verified
-      : typeof o.success === "boolean"
-        ? (o.success as boolean)
-        : res.ok;
+export const BIOMETRIC_VERIFY_MIN_CONFIDENCE = 0.85;
+export const BIOMETRIC_VERIFY_MIN_MODALITY_SCORE = 0.85;
+const REQUIRED_MODALITIES = ["face", "fingerprint", "iris"] as const;
 
+/** Never treat HTTP success / `success: true` as biometric pass. */
+export function evaluateBiometricVerifyResult(json: unknown) {
+  const o = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
   const confidence = typeof o.confidence === "number" ? o.confidence : null;
+  const scoresRaw = o.scores && typeof o.scores === "object" ? (o.scores as Record<string, unknown>) : {};
+  const scores: Record<string, number> = {};
+  for (const [k, v] of Object.entries(scoresRaw)) {
+    if (typeof v === "number") scores[k] = v;
+  }
+
+  const allModalityScoresPresent = REQUIRED_MODALITIES.every((m) => typeof scores[m] === "number");
+  const allModalityScoresPass = REQUIRED_MODALITIES.every(
+    (m) => (scores[m] ?? 0) >= BIOMETRIC_VERIFY_MIN_MODALITY_SCORE
+  );
+
+  const verified =
+    o.verified === true &&
+    confidence !== null &&
+    confidence >= BIOMETRIC_VERIFY_MIN_CONFIDENCE &&
+    allModalityScoresPresent &&
+    allModalityScoresPass;
+
   const quality = typeof o.quality === "number" ? o.quality : null;
   const embedding = o.embedding ?? o.template ?? null;
 
-  return { verified, confidence, quality, embedding, raw: json ?? text };
+  return {
+    verified,
+    confidence,
+    quality,
+    embedding,
+    scores,
+    upstreamVerified: o.verified === true,
+    allModalityScoresPresent,
+    allModalityScoresPass,
+  };
+}
+
+export function interpretVerifyResponse(res: Response, json: unknown, text: string) {
+  const evaluated = evaluateBiometricVerifyResult(json);
+  return {
+    verified: evaluated.verified,
+    confidence: evaluated.confidence,
+    quality: evaluated.quality,
+    embedding: evaluated.embedding,
+    raw: json ?? text,
+    scores: evaluated.scores,
+  };
 }
 
 type PersistOpts = {
@@ -325,15 +362,7 @@ export async function persistBiometricEnrollment(opts: {
   const irisEmbedding = embeddings.iris;
   const fingerprintEmbedding = embeddings.fingerprint;
 
-  const existing = await prisma.biometricAuth.findUnique({ where: { userId } });
-
-  const nextFaceVerified = faceEmbedding ? true : (existing?.faceVerified ?? false);
-  const nextIrisVerified = irisEmbedding ? true : (existing?.irisVerified ?? false);
-  const nextFingerprintVerified = fingerprintEmbedding
-    ? true
-    : (existing?.fingerprintVerified ?? false);
-  const allVerified = nextFaceVerified && nextIrisVerified && nextFingerprintVerified;
-
+  // Enrollment stores reference templates only — do not mark login verification complete.
   await prisma.biometricAuth.upsert({
     where: { userId },
     create: {
@@ -341,18 +370,37 @@ export async function persistBiometricEnrollment(opts: {
       ...(faceEmbedding ? { faceEmbedding } : {}),
       ...(irisEmbedding ? { irisEmbedding } : {}),
       ...(fingerprintEmbedding ? { fingerprintEmbedding } : {}),
-      faceVerified: nextFaceVerified,
-      irisVerified: nextIrisVerified,
-      fingerprintVerified: nextFingerprintVerified,
-      verifiedAt: allVerified ? new Date() : null,
+      faceVerified: false,
+      irisVerified: false,
+      fingerprintVerified: false,
+      verifiedAt: null,
     },
     update: {
-      ...(faceEmbedding ? { faceEmbedding, faceVerified: true } : {}),
-      ...(irisEmbedding ? { irisEmbedding, irisVerified: true } : {}),
-      ...(fingerprintEmbedding ? { fingerprintEmbedding, fingerprintVerified: true } : {}),
-      verifiedAt: allVerified ? new Date() : undefined,
+      ...(faceEmbedding ? { faceEmbedding } : {}),
+      ...(irisEmbedding ? { irisEmbedding } : {}),
+      ...(fingerprintEmbedding ? { fingerprintEmbedding } : {}),
+      faceVerified: false,
+      irisVerified: false,
+      fingerprintVerified: false,
+      verifiedAt: null,
     },
   });
+
+  // #region agent log
+  fetch("http://127.0.0.1:7440/ingest/e2a01d83-0a9f-476b-8c9e-61fa3d3a3a79", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e23d66" },
+    body: JSON.stringify({
+      sessionId: "e23d66",
+      runId: "enroll-flags-fix",
+      hypothesisId: "H-flags",
+      location: "biometric-verify-service.ts:persistBiometricEnrollment",
+      message: "enrollment saved; verification flags reset",
+      data: { userId, modalities },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
 
   await Promise.all(
     modalities.map((modality) =>
@@ -377,7 +425,7 @@ export async function persistBiometricEnrollment(opts: {
     userId,
     action: auditAction,
     category: "SECURITY",
-    details: { modalities, all_verified: allVerified },
+    details: { modalities, verification_reset: true },
     ipAddress,
     userAgent,
   });

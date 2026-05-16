@@ -101,6 +101,7 @@ export async function updateUser(rawInput: unknown, actor: Actor) {
   await writeAuditLog({
     userId: actor.id,
     action: "admin_user_updated",
+    category: "UPDATE",
     details: { targetUserId: input.id, role: input.role, isActive: input.isActive },
   });
 
@@ -110,19 +111,47 @@ export async function updateUser(rawInput: unknown, actor: Actor) {
 export async function deleteUser(rawInput: unknown, actor: Actor) {
   const input = DeleteUserSchema.parse(rawInput);
 
-  const updated = await prisma.user.update({
+  const user = await prisma.user.findUnique({
     where: { id: input.id },
-    data: { isActive: false },
-    select: { id: true, isActive: true },
+    select: { id: true, role: true, email: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.id === actor.id) {
+    throw new Error("You cannot delete your own account");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const uid = user.id;
+
+    await tx.biometricAttempt.deleteMany({ where: { userId: uid } });
+    await tx.biometricSample.deleteMany({ where: { userId: uid } });
+    await tx.biometricAuth.deleteMany({ where: { userId: uid } });
+
+    if (user.role === "patient") {
+      await tx.medicalRecord.deleteMany({ where: { patientId: uid } });
+      await tx.accessGrant.deleteMany({ where: { patientId: uid } });
+    } else if (user.role === "doctor") {
+      await tx.accessGrant.deleteMany({ where: { doctorId: uid } });
+    } else if (user.role === "nurse") {
+      await tx.accessGrant.deleteMany({ where: { nurseId: uid } });
+    }
+
+    await tx.auditLog.deleteMany({ where: { userId: uid } });
+    await tx.user.delete({ where: { id: uid } });
   });
 
   await writeAuditLog({
     userId: actor.id,
-    action: "admin_user_soft_deleted",
-    details: { targetUserId: input.id },
+    action: "admin_user_deleted",
+    category: "DELETE",
+    details: { targetUserId: input.id, role: user.role, email: user.email },
   });
 
-  return updated;
+  return { id: input.id, deleted: true };
 }
 
 export async function createStaff(
@@ -156,6 +185,7 @@ export async function createStaff(
   await writeAuditLog({
     userId: actor.id,
     action: role === "doctor" ? "admin_doctor_added" : "admin_nurse_added",
+    category: "CREATE",
     details: {
       targetUserId: created.id,
       username: input.username,
@@ -170,7 +200,14 @@ export async function getDoctorProfiles() {
   const [doctors, grants, logs] = await Promise.all([
     prisma.user.findMany({
       where: { role: "doctor" },
-      select: { id: true, name: true, email: true, isActive: true, biometricAuth: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+        biometricAuth: true,
+        biometricSamples: { where: { isActive: true }, select: { modality: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.accessGrant.findMany({
@@ -189,16 +226,22 @@ export async function getDoctorProfiles() {
     const doctorGrants = grants.filter((g) => g.doctorId === d.id);
     const doctorLogs = logs.filter((l) => l.userId === d.id);
 
+    const modalities = new Set(d.biometricSamples.map((s) => s.modality));
+    const enrolled =
+      modalities.has("face") && modalities.has("iris") && modalities.has("fingerprint");
+    const verified = Boolean(
+      d.biometricAuth?.faceVerified &&
+        d.biometricAuth?.irisVerified &&
+        d.biometricAuth?.fingerprintVerified
+    );
+
     return {
       id: d.id,
       name: d.name,
       email: d.email,
       isActive: d.isActive,
-      verified: Boolean(
-        d.biometricAuth?.faceVerified &&
-          d.biometricAuth?.irisVerified &&
-          d.biometricAuth?.fingerprintVerified
-      ),
+      enrolled,
+      verified,
       patientsCount: new Set(doctorGrants.map((g) => g.patientId)).size,
       lastActivity: doctorLogs[0]?.timestamp ?? null,
     };
@@ -209,7 +252,14 @@ export async function getNurseProfiles() {
   const [nurses, grants, logs] = await Promise.all([
     prisma.user.findMany({
       where: { role: "nurse" },
-      select: { id: true, name: true, email: true, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+        biometricAuth: true,
+        biometricSamples: { where: { isActive: true }, select: { modality: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.accessGrant.findMany({
@@ -228,11 +278,22 @@ export async function getNurseProfiles() {
     const nurseGrants = grants.filter((g) => g.nurseId === n.id);
     const nurseLogs = logs.filter((l) => l.userId === n.id);
 
+    const modalities = new Set(n.biometricSamples.map((s) => s.modality));
+    const enrolled =
+      modalities.has("face") && modalities.has("iris") && modalities.has("fingerprint");
+    const verified = Boolean(
+      n.biometricAuth?.faceVerified &&
+        n.biometricAuth?.irisVerified &&
+        n.biometricAuth?.fingerprintVerified
+    );
+
     return {
       id: n.id,
       name: n.name,
       email: n.email,
       isActive: n.isActive,
+      enrolled,
+      verified,
       assignedDoctors: Array.from(
         new Set(nurseGrants.map((g) => g.doctorId).filter(Boolean))
       ).length,

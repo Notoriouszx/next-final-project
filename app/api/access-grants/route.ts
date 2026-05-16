@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { generateMagicToken, generateOtpCode } from "@/lib/tokens";
 import { writeAuditLog } from "@/lib/audit";
+import { emitRealtime } from "@/lib/realtime";
+import { roomsForPatientBroadcast } from "@/lib/patient-realtime";
 
 const createSchema = z.object({
   doctorId: z.string().optional(),
@@ -61,9 +63,19 @@ export async function POST(request: NextRequest) {
     await writeAuditLog({
       userId: session.user.id,
       action: "access_grant_created",
-      details: { grantId: grant.id },
+      category: "SECURITY",
+      details: { grantId: grant.id, doctorId, nurseId },
       ipAddress: request.headers.get("x-forwarded-for"),
       userAgent: request.headers.get("user-agent"),
+    });
+
+    const rooms = await roomsForPatientBroadcast(session.user.id);
+    const staffRoom = doctorId ? `user:${doctorId}` : nurseId ? `user:${nurseId}` : null;
+    const allRooms = staffRoom ? [...new Set([...rooms, staffRoom])] : rooms;
+    await emitRealtime("access:updated", allRooms, {
+      kind: "granted",
+      patientId: session.user.id,
+      grantId: grant.id,
     });
 
     return NextResponse.json({

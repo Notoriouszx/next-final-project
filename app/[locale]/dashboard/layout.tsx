@@ -1,6 +1,6 @@
 import { redirect } from "@/i18n/navigation";
 import { Navbar } from "@/components/navbar";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
 import { getSession } from "@/lib/session";
 import type { User } from "@/lib/types";
 
@@ -30,12 +30,7 @@ export default async function DashboardLayout({
           role: user.role,
         }}
       />
-      <div className="flex">
-        <Sidebar role={user.role} />
-        <main className="flex-1 mt-16 ms-64 min-h-[calc(100vh-4rem)] p-6 md:p-8">
-          {children}
-        </main>
-      </div>
+      <DashboardShell role={user.role}>{children}</DashboardShell>
     </div>
   );
 }

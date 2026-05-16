@@ -11,6 +11,8 @@ import prisma from "@/lib/prisma";
 import { AdminCharts } from "./admin-charts";
 import { AdminStatsCards } from "./admin-stats-cards";
 import { Link } from "@/i18n/navigation";
+import { Badge } from "@/components/ui/badge";
+import { roleBadgeVariant } from "@/lib/role-badge";
 
 interface AdminDashboardProps {
   user: User;
@@ -278,9 +280,9 @@ export default async function AdminDashboard({
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="inline-block rounded-full bg-primary/10 px-2 py-1 text-xs font-medium capitalize text-primary">
+                    <Badge variant={roleBadgeVariant(u.role)} className="capitalize">
                       {u.role}
-                    </span>
+                    </Badge>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {u.createdAt.toLocaleDateString()}
                     </p>

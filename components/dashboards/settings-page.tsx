@@ -18,20 +18,21 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 const MAINT_KEY = "ehc_maintenance_mode";
 
 export function SettingsPage({ user, isAdmin }: { user: User; isAdmin: boolean }) {
-  const [appName, setAppName] = useState("MediCare");
+  const [appName, setAppName] = useState(() => {
+    if (typeof window === "undefined") return "MediCare";
+    return localStorage.getItem("ehc_app_name") ?? "MediCare";
+  });
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState("");
   const [twoFa, setTwoFa] = useState(user.two_factor_enabled);
   const [sessionMins, setSessionMins] = useState(60);
-  const [maintenance, setMaintenance] = useState(false);
+  const [maintenance, setMaintenance] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(MAINT_KEY) === "1";
+  });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("ehc_app_name") : null;
-    if (stored) setAppName(stored);
-    if (typeof window !== "undefined") {
-      setMaintenance(localStorage.getItem(MAINT_KEY) === "1");
-    }
     void (async () => {
       const res = await fetch("/api/user/profile");
       if (!res.ok) return;

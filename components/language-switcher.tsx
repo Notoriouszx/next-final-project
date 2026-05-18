@@ -27,8 +27,6 @@ export function LanguageSwitcher() {
     router.replace(pathname, { locale: newLocale });
   };
 
-  const currentLanguage = languages.find((lang) => lang.code === locale);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -62,7 +62,7 @@ export function Navbar({ user }: NavbarProps) {
             <Activity className="h-5 w-5" />
           </div>
           <span className="truncate text-lg font-bold tracking-tight sm:text-xl">
-            <span className="text-gradient-brand">Medi</span>
+            <span className="text-red-500">Medi</span>
             <span className="text-foreground">Care</span>
           </span>
         </Link>

@@ -27,6 +27,26 @@ export type ActivePatientRow = {
   expiresAt: string;
 };
 
+const ALLOWED_FILE_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+]);
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
+
+function validateMedicalFiles(files: FileList): string | null {
+  for (const file of Array.from(files)) {
+    if (!ALLOWED_FILE_TYPES.has(file.type)) {
+      return `${file.name} is not supported. Use PDF, JPG, or PNG.`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `${file.name} is too large. Maximum size is 15MB.`;
+    }
+  }
+  return null;
+}
+
 export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[] }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -45,6 +65,14 @@ export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[
 
   const onFilesPicked = async (files: FileList | null) => {
     if (!uploadPatientId || !files?.length) return;
+    const validationError = validateMedicalFiles(files);
+    if (validationError) {
+      setError(validationError);
+      setUploadPatientId(null);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     setProgress(0);
     setError(null);

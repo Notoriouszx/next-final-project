@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProgressBar } from "@/components/ui/loading";
+import { PageHeader } from "@/components/page-header";
+import { LoadingOverlay } from "@/components/ui/loading";
 import {
   Card,
   CardContent,
@@ -82,11 +85,13 @@ export function PatientUploadPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Upload record</h1>
-        <p className="text-muted-foreground">PDF, JPG, or PNG — multiple files supported</p>
-      </div>
-      <Card>
+      <PageHeader
+        role="patient"
+        title="Upload record"
+        description="PDF, JPG, or PNG — multiple files supported."
+      />
+      <Card className="relative overflow-hidden">
+        <LoadingOverlay show={busy} label="Uploading your records…" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
@@ -117,20 +122,17 @@ export function PatientUploadPage() {
                 disabled={busy}
               />
             </div>
-            {progress > 0 && busy ? (
-              <div className="space-y-1">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full bg-primary transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">{progress}%</p>
+            {busy ? (
+              <div className="space-y-2">
+                <ProgressBar value={progress > 0 ? progress : undefined} indeterminate={progress === 0} />
+                <p className="text-xs font-medium text-muted-foreground">
+                  {progress > 0 ? `${progress}% uploaded` : "Preparing upload…"}
+                </p>
               </div>
             ) : null}
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" disabled={busy}>
-              {busy ? "Uploading…" : "Upload"}
+            <Button type="submit" variant="success" loading={busy} disabled={busy}>
+              Upload files
             </Button>
           </form>
         </CardContent>

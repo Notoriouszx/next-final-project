@@ -6,7 +6,6 @@ import {
   fileToDataUrl,
   runExternalJsonVerify,
 } from "@/lib/biometric-verify-service";
-import { validateBiometricUploadFile } from "@/lib/biometric-image-validation";
 
 const formSchema = z.object({
   userId: z.string().min(1),
@@ -39,13 +38,6 @@ export async function POST(request: NextRequest) {
     for (const modality of ["face", "iris", "fingerprint"] as const) {
       const file = fd.get(modality);
       if (file instanceof File && file.size > 0) {
-        const fileCheck = validateBiometricUploadFile(file);
-        if (!fileCheck.ok) {
-          return NextResponse.json(
-            { error: `${modality}: ${fileCheck.error}` },
-            { status: 400 }
-          );
-        }
         images[MODALITY_FIELDS[modality]] = await fileToDataUrl(file);
       }
     }
@@ -119,19 +111,6 @@ export async function POST(request: NextRequest) {
           upstream: { url: upstreamUrl, status: res.status, body: raw },
         },
         { status: 502 }
-      );
-    }
-
-    if (evaluated.qualityRejected) {
-      return NextResponse.json(
-        {
-          verified: false,
-          error: evaluated.qualityRejectReason ?? "Biometric quality checks failed",
-          confidence: evaluated.confidence,
-          scores: evaluated.scores,
-          raw,
-        },
-        { status: 422 }
       );
     }
 

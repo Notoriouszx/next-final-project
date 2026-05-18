@@ -9,10 +9,12 @@ import {
 import {
   Users,
   FileText,
+  Stethoscope,
   Clock,
   CircleCheck as CheckCircle,
 } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { DoctorDashboardPending } from "@/components/doctor/doctor-dashboard-pending";
 
 interface DoctorDashboardProps {
   user: User;
@@ -20,7 +22,7 @@ interface DoctorDashboardProps {
 
 export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
   const now = new Date();
-  const [accessGrants, pendingRequests, patientIds] = await Promise.all([
+  const [accessGrants, pendingRequests, patientsTreated, patientIds] = await Promise.all([
     prisma.accessGrant.findMany({
       where: { doctorId: user.id, status: "active", expiresAt: { gt: now } },
       include: { patient: true },
@@ -28,6 +30,9 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
     prisma.accessGrant.findMany({
       where: { doctorId: user.id, status: "pending" },
       include: { patient: true },
+    }),
+    prisma.accessGrant.count({
+      where: { doctorId: user.id, status: "resolved" },
     }),
     prisma.accessGrant
       .findMany({
@@ -81,12 +86,12 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
 
         <Card className="border-primary/10 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Records Viewed</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Patients Treated</CardTitle>
+            <Stethoscope className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentRecords.length}</div>
-            <p className="text-xs text-muted-foreground">Recent in your network</p>
+            <div className="text-2xl font-bold">{patientsTreated}</div>
+            <p className="text-xs text-muted-foreground">Completed care episodes</p>
           </CardContent>
         </Card>
       </div>
@@ -98,39 +103,14 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
             <CardDescription>Patients requesting your access</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {pendingRequests.length > 0 ? (
-                pendingRequests.map(
-                  (request: {
-                    id: string;
-                    createdAt: Date;
-                    patient: { name: string };
-                  }) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                        <span className="text-sm font-medium">
-                          {request.patient.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{request.patient.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {request.createdAt.toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-xs font-medium text-amber-600">Pending</div>
-                  </div>
-                  )
-                )
-              ) : (
-                <p className="text-sm text-muted-foreground">No pending requests</p>
-              )}
-            </div>
+            <DoctorDashboardPending
+              pending={pendingRequests.map((request) => ({
+                id: request.id,
+                patientName: request.patient.name,
+                patientEmail: "",
+                createdAt: request.createdAt.toISOString(),
+              }))}
+            />
           </CardContent>
         </Card>
 

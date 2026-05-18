@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   const user = sessionUser as User;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50/80 to-background dark:from-slate-950/40">
+    <div className="min-h-screen">
       <Navbar
         user={{
           id: user.id,

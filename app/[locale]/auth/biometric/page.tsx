@@ -6,7 +6,9 @@ import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, FingerprintPattern as Fingerprint, Eye, Scan, Loader2 } from "lucide-react";
+import { Activity, FingerprintPattern as Fingerprint, Eye, Scan } from "lucide-react";
+import { LoadingOverlay } from "@/components/ui/loading";
+import { PageLoader } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 
 type Modality = "face" | "iris" | "fingerprint";
@@ -49,20 +51,6 @@ function BiometricContent() {
   const onFileSelected = (files: FileList | null) => {
     if (!activeType || !files?.length) return;
     const file = files[0];
-    const maxBytes = 8 * 1024 * 1024;
-    const minBytes = 4 * 1024;
-    if (file.size < minBytes) {
-      setError("Image is too small — use a higher-resolution capture.");
-      return;
-    }
-    if (file.size > maxBytes) {
-      setError("Image must be 8 MB or smaller.");
-      return;
-    }
-    if (file.type && !/^image\/(jpeg|png|webp)$/i.test(file.type)) {
-      setError("Only JPEG, PNG, or WebP images are accepted.");
-      return;
-    }
     setPendingFiles((prev) => ({ ...prev, [activeType]: file }));
     setStepStatus((prev) => ({ ...prev, [activeType]: "pending" }));
     setActiveType(null);
@@ -95,13 +83,7 @@ function BiometricContent() {
       const res = await fetch("/api/biometric/verify-upload", { method: "POST", body: fd });
       const data = (await res.json()) as { verified?: boolean; error?: string };
       if (!res.ok) {
-        setError(
-          typeof data?.error === "string"
-            ? data.error
-            : res.status === 422
-              ? "Image quality too low — use clearer, well-lit photos."
-              : "Verification failed"
-        );
+        setError(data?.error ?? "Verification failed");
         return;
       }
       if (data.verified) {
@@ -135,8 +117,8 @@ function BiometricContent() {
   ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-lg">
+    <div className="flex min-h-screen items-center justify-center p-4 sm:p-6">
+      <Card className="surface-elevated relative w-full max-w-lg overflow-hidden">
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <Activity className="h-12 w-12 text-primary" />
@@ -146,7 +128,8 @@ function BiometricContent() {
             Upload face, iris, and fingerprint samples, then submit for verification.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="relative space-y-4">
+          <LoadingOverlay show={submitting} label="Verifying biometrics…" />
           <input
             ref={fileInputRef}
             type="file"
@@ -206,15 +189,13 @@ function BiometricContent() {
           ) : null}
 
           {allPending && !allVerified ? (
-            <Button className="w-full" disabled={submitting} onClick={() => void submitAll()}>
-              {submitting ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  Verifying…
-                </>
-              ) : (
-                "Submit all biometrics"
-              )}
+            <Button
+              className="w-full"
+              variant="gradient"
+              loading={submitting}
+              onClick={() => void submitAll()}
+            >
+              Submit all biometrics
             </Button>
           ) : null}
 
@@ -232,13 +213,7 @@ function BiometricContent() {
 export default function BiometricPage() {
   return (
     <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-          <Card className="w-full max-w-lg">
-            <CardContent className="py-12 text-center text-muted-foreground">Loading…</CardContent>
-          </Card>
-        </div>
-      }
+      fallback={<PageLoader label="Preparing biometric verification…" />}
     >
       <BiometricContent />
     </Suspense>

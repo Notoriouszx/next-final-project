@@ -7,7 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton, LoadingOverlay } from "@/components/ui/loading";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -42,6 +43,7 @@ export function AdminDoctorsPanel() {
   const [openAdd, setOpenAdd] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profile, setProfile] = useState<DoctorProfile | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<AddDoctorInput>({
     resolver: zodResolver(addDoctorSchema),
@@ -65,36 +67,44 @@ export function AdminDoctorsPanel() {
   }, [selectedId]);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    await fetch("/api/admin/doctors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    setOpenAdd(false);
-    form.reset();
-    const res = await fetch("/api/admin/doctors");
-    const data = (await res.json()) as { items?: DoctorItem[] };
-    setItems(data.items ?? []);
+    setSubmitting(true);
+    try {
+      await fetch("/api/admin/doctors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      setOpenAdd(false);
+      form.reset();
+      const res = await fetch("/api/admin/doctors");
+      const data = (await res.json()) as { items?: DoctorItem[] };
+      setItems(data.items ?? []);
+    } finally {
+      setSubmitting(false);
+    }
   });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Doctors</h1>
-          <p className="text-muted-foreground">Specialized management for medical staff.</p>
-        </div>
-        <Button onClick={() => setOpenAdd(true)}>Add Doctor</Button>
-      </div>
+      <PageHeader
+        role="admin"
+        title="Doctors"
+        description="Manage medical staff, biometric enrollment, and patient load."
+      >
+        <Button variant="info" onClick={() => setOpenAdd(true)}>
+          Add doctor
+        </Button>
+      </PageHeader>
 
-      <Card>
+      <Card className="relative overflow-hidden">
+        <LoadingOverlay show={loading} label="Loading doctors…" />
         <CardHeader>
           <CardTitle>Doctor Management Panel</CardTitle>
           <CardDescription>Verified status, patient load, and activity monitoring.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            <TableSkeleton rows={6} cols={6} />
           ) : (
             <Table>
               <TableHeader>
@@ -150,7 +160,9 @@ export function AdminDoctorsPanel() {
               <Button variant="outline" type="button" onClick={() => setOpenAdd(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Create Doctor</Button>
+              <Button type="submit" variant="success" loading={submitting}>
+                Create doctor
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -162,7 +174,7 @@ export function AdminDoctorsPanel() {
             <DialogTitle>Doctor Profile View</DialogTitle>
           </DialogHeader>
           {!profile ? (
-            <Skeleton className="h-36 w-full" />
+            <TableSkeleton rows={3} cols={2} />
           ) : (
             <div className="space-y-4">
               <div className="rounded-lg border p-3">

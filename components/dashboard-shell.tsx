@@ -14,7 +14,7 @@ export function DashboardShell({
   return (
     <div className="flex w-full">
       <Sidebar role={role} />
-      <main className="mt-16 ms-16 min-h-[calc(100vh-4rem)] min-w-0 flex-1 p-6 transition-[margin-inline-start] duration-300 ease-in-out peer-hover/sbar:ms-64 md:p-8">
+      <main className="mt-16 ms-[4.25rem] min-h-[calc(100vh-4rem)] min-w-0 flex-1 p-4 transition-[margin-inline-start] duration-300 ease-out peer-hover/sbar:ms-64 sm:p-6 md:p-8">
         <RealtimeBridge />
         {children}
       </main>

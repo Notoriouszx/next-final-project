@@ -1,77 +1,38 @@
 "use client";
 
 import * as React from "react";
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  UserPlus,
-  Activity,
-  Settings,
-  ChartBar as BarChart3,
-  Shield,
-  Upload,
-  Key,
-  Stethoscope,
-  Heart,
-} from "lucide-react";
+import { Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { Link, usePathname } from "@/i18n/navigation";
+import { getNavItemsForRole, ROLE_ACCENT } from "@/lib/navigation-config";
+import { roleBadgeVariant } from "@/lib/role-badge";
+import { Badge } from "@/components/ui/badge";
 
 interface SidebarProps {
   role: UserRole;
 }
 
-const menuItems: Record<
-  UserRole,
-  Array<{ href: string; label: string; icon: React.ElementType }>
-> = {
-  admin: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/users", label: "Users Management", icon: Users },
-    { href: "/dashboard/doctors", label: "Doctors", icon: Stethoscope },
-    { href: "/dashboard/nurses", label: "Nurses", icon: Heart },
-    { href: "/dashboard/patients", label: "Patients", icon: UserPlus },
-    { href: "/dashboard/records", label: "Medical Records", icon: FileText },
-    { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/dashboard/audit-logs", label: "Audit Logs", icon: Shield },
-    { href: "/dashboard/settings", label: "Settings", icon: Settings },
-  ],
-  doctor: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/my-patients", label: "My Patients", icon: Users },
-    { href: "/dashboard/access-requests", label: "Access Requests", icon: Key },
-    { href: "/dashboard/records", label: "Medical Records", icon: FileText },
-    { href: "/dashboard/profile", label: "Profile", icon: Settings },
-  ],
-  nurse: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/assigned-patients", label: "Assigned Patients", icon: Users },
-    { href: "/dashboard/records", label: "Records Viewer", icon: FileText },
-    { href: "/dashboard/profile", label: "Profile", icon: Settings },
-  ],
-  patient: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/my-records", label: "My Records", icon: FileText },
-    { href: "/dashboard/upload", label: "Upload Record", icon: Upload },
-    { href: "/dashboard/grant-access", label: "Grant Access", icon: Key },
-    { href: "/dashboard/security", label: "Security Settings", icon: Shield },
-  ],
-};
-
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
-  const items = menuItems[role] || [];
+  const items = getNavItemsForRole(role);
 
   return (
     <aside
       className={cn(
-        "peer/sbar group/sbar fixed start-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-16 flex-col overflow-hidden border-e border-primary/10 bg-background/95 backdrop-blur transition-[width] duration-300 ease-in-out hover:w-64"
+        "peer/sbar group/sbar fixed start-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-[4.25rem] flex-col overflow-hidden border-e border-border/80 bg-card/90 shadow-sm backdrop-blur-md transition-[width] duration-300 ease-out hover:w-64 md:w-16 md:hover:w-64"
       )}
     >
-      <div className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden p-3">
-        <nav className="flex flex-col gap-1">
+      <div className="pointer-events-none absolute inset-y-0 end-0 w-px bg-gradient-to-b from-transparent via-primary/20 to-transparent opacity-0 transition-opacity group-hover/sbar:opacity-100" />
+
+      <div className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden p-2.5">
+        <div className="mb-1 hidden px-1 opacity-0 transition-opacity group-hover/sbar:opacity-100 md:block">
+          <Badge variant={roleBadgeVariant(role)} className="capitalize">
+            {role}
+          </Badge>
+        </div>
+
+        <nav className="flex flex-col gap-0.5">
           {items.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -83,33 +44,39 @@ export function Sidebar({ role }: SidebarProps) {
                 href={item.href}
                 title={item.label}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors",
+                  "group/item relative flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm font-medium transition-all",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? cn(
+                        "bg-gradient-to-r text-white shadow-md",
+                        ROLE_ACCENT[role],
+                        "shadow-black/10"
+                      )
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span
+                <Icon
                   className={cn(
-                    "min-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[opacity,transform] duration-300 ease-in-out group-hover/sbar:translate-x-0 group-hover/sbar:opacity-100 ltr:-translate-x-1 rtl:translate-x-1"
+                    "h-[1.125rem] w-[1.125rem] shrink-0",
+                    isActive ? "text-white" : "text-primary/70 group-hover/item:text-primary"
                   )}
-                >
+                />
+                <span className="min-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover/sbar:opacity-100 ltr:-translate-x-1 group-hover/sbar:ltr:translate-x-0 rtl:translate-x-1 group-hover/sbar:rtl:translate-x-0">
                   {item.label}
                 </span>
               </Link>
             );
           })}
         </nav>
-        <div className="mt-auto rounded-lg border border-dashed border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+
+        <div className="mt-auto rounded-xl border border-dashed border-primary/15 bg-gradient-to-br from-primary/5 to-info/5 p-3">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <Activity className="h-4 w-4 shrink-0 text-primary" />
-            <span className="overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-300 ease-in-out group-hover/sbar:opacity-100">
+            <span className="overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-300 group-hover/sbar:opacity-100">
               MediCare
             </span>
           </div>
-          <p className="mt-1 overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-300 ease-in-out group-hover/sbar:opacity-100">
-            Secure health portal — v1.3
+          <p className="mt-1 overflow-hidden whitespace-nowrap text-[11px] leading-snug text-muted-foreground opacity-0 transition-opacity duration-300 group-hover/sbar:opacity-100">
+            Secure health portal
           </p>
         </div>
       </div>

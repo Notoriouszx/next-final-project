@@ -2,9 +2,10 @@ import { redirect } from "@/i18n/navigation";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import type { User } from "@/lib/types";
+import { canAccessRoute } from "@/lib/rbac";
+import { NurseEmptyState } from "@/components/nurse-empty-state";
 import AdminDashboard from "@/components/dashboards/admin-dashboard";
 import DoctorDashboard from "@/components/dashboards/doctor-dashboard";
-import NurseDashboard from "@/components/dashboards/nurse-dashboard";
 import PatientDashboard from "@/components/dashboards/patient-dashboard";
 import { DashboardPlaceholder } from "@/components/dashboard-placeholder";
 import { AdminUsersManagement } from "@/components/dashboards/admin-users-management";
@@ -23,8 +24,6 @@ import DoctorMyPatientsPage from "@/components/dashboards/doctor-my-patients-pag
 import DoctorAccessRequestsPage from "@/components/dashboards/doctor-access-requests-page";
 import DoctorRecordsPage from "@/components/dashboards/doctor-records-page";
 import StaffProfilePage from "@/components/dashboards/staff-profile-page";
-import NurseAssignedPatientsPage from "@/components/dashboards/nurse-assigned-patients-page";
-import NurseRecordsPage from "@/components/dashboards/nurse-records-page";
 
 const TITLES: Record<string, string> = {
   users: "Users management",
@@ -61,6 +60,10 @@ export default async function DashboardSectionPage({ params, searchParams }: Pro
 
   const user = sessionUser as User;
   const path = slug?.join("/") ?? "";
+
+  if (!canAccessRoute(user.role, path)) {
+    redirect({ href: "/dashboard", locale });
+  }
 
   const periodDays =
     query.period === "7" || query.period === "90" || query.period === "30"
@@ -123,12 +126,12 @@ export default async function DashboardSectionPage({ params, searchParams }: Pro
   }
 
   if (user.role === "nurse") {
-    if (path === "") return <NurseDashboard user={user} />;
-    if (path === "assigned-patients") return <NurseAssignedPatientsPage user={user} />;
-    if (path === "records") return <NurseRecordsPage user={user} />;
-    if (path === "profile") return <StaffProfilePage user={user} />;
-    const title = TITLES[path] ?? path.replace(/-/g, " ");
-    return <DashboardPlaceholder title={title} />;
+    return (
+      <NurseEmptyState
+        title={path ? (TITLES[path] ?? path.replace(/-/g, " ")) : "Nurse workspace"}
+        description="Nurse tools are coming soon. Your account is active — we'll enable patient assignments and records here shortly."
+      />
+    );
   }
 
   return <div>Dashboard not found</div>;

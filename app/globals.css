@@ -1,49 +1,145 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: 0 0% 100%;
-  --color-foreground: 222.2 84% 4.9%;
+  --color-background: 210 40% 98%;
+  --color-foreground: 222 47% 11%;
   --color-card: 0 0% 100%;
-  --color-card-foreground: 222.2 84% 4.9%;
+  --color-card-foreground: 222 47% 11%;
   --color-popover: 0 0% 100%;
-  --color-popover-foreground: 222.2 84% 4.9%;
-  --color-primary: 221.2 83.2% 53.3%;
-  --color-primary-foreground: 210 40% 98%;
-  --color-secondary: 210 40% 96.1%;
-  --color-secondary-foreground: 222.2 47.4% 11.2%;
-  --color-muted: 210 40% 96.1%;
-  --color-muted-foreground: 215.4 16.3% 46.9%;
-  --color-accent: 210 40% 96.1%;
-  --color-accent-foreground: 222.2 47.4% 11.2%;
-  --color-destructive: 0 84.2% 60.2%;
-  --color-destructive-foreground: 210 40% 98%;
-  --color-border: 214.3 31.8% 91.4%;
-  --color-input: 214.3 31.8% 91.4%;
-  --color-ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+  --color-popover-foreground: 222 47% 11%;
+  --color-primary: 217 91% 52%;
+  --color-primary-foreground: 0 0% 100%;
+  --color-secondary: 214 32% 93%;
+  --color-secondary-foreground: 222 47% 11%;
+  --color-muted: 214 32% 94%;
+  --color-muted-foreground: 215 16% 42%;
+  --color-accent: 214 40% 92%;
+  --color-accent-foreground: 222 47% 11%;
+  --color-destructive: 0 72% 51%;
+  --color-destructive-foreground: 0 0% 100%;
+  --color-success: 152 69% 38%;
+  --color-success-foreground: 0 0% 100%;
+  --color-warning: 38 92% 50%;
+  --color-warning-foreground: 26 83% 14%;
+  --color-info: 199 89% 42%;
+  --color-info-foreground: 0 0% 100%;
+  --color-border: 214 32% 88%;
+  --color-input: 214 32% 88%;
+  --color-ring: 217 91% 52%;
+  --radius: 0.75rem;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 .dark {
-  --color-background: 222.2 84% 4.9%;
+  --color-background: 222 47% 6%;
   --color-foreground: 210 40% 98%;
-  --color-card: 222.2 84% 4.9%;
+  --color-card: 222 47% 9%;
   --color-card-foreground: 210 40% 98%;
-  --color-popover: 222.2 84% 4.9%;
+  --color-popover: 222 47% 9%;
   --color-popover-foreground: 210 40% 98%;
-  --color-primary: 217.2 91.2% 59.8%;
-  --color-primary-foreground: 222.2 47.4% 11.2%;
-  --color-secondary: 217.2 32.6% 17.5%;
+  --color-primary: 217 91% 60%;
+  --color-primary-foreground: 222 47% 8%;
+  --color-secondary: 217 33% 17%;
   --color-secondary-foreground: 210 40% 98%;
-  --color-muted: 217.2 32.6% 17.5%;
-  --color-muted-foreground: 215 20.2% 65.1%;
-  --color-accent: 217.2 32.6% 17.5%;
+  --color-muted: 217 33% 17%;
+  --color-muted-foreground: 215 20% 65%;
+  --color-accent: 217 33% 17%;
   --color-accent-foreground: 210 40% 98%;
-  --color-destructive: 0 62.8% 30.6%;
+  --color-destructive: 0 63% 45%;
   --color-destructive-foreground: 210 40% 98%;
-  --color-border: 217.2 32.6% 17.5%;
-  --color-input: 217.2 32.6% 17.5%;
-  --color-ring: 224.3 76.3% 48%;
+  --color-success: 152 60% 45%;
+  --color-success-foreground: 0 0% 100%;
+  --color-warning: 38 92% 50%;
+  --color-warning-foreground: 26 83% 14%;
+  --color-info: 199 89% 48%;
+  --color-info-foreground: 222 47% 8%;
+  --color-border: 217 33% 20%;
+  --color-input: 217 33% 20%;
+  --color-ring: 217 91% 60%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(217 91% 52% / 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, hsl(199 89% 48% / 0.06), transparent);
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(217 91% 60% / 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 0% 100%, hsl(152 60% 45% / 0.05), transparent);
+  }
+}
+
+@layer utilities {
+  .surface-card {
+    @apply rounded-xl border border-border/80 bg-card shadow-sm shadow-primary/5;
+  }
+
+  .surface-elevated {
+    @apply rounded-xl border border-border/60 bg-card/90 shadow-md shadow-primary/[0.07] backdrop-blur-sm;
+  }
+
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-primary via-info to-primary bg-clip-text text-transparent;
+  }
+
+  .animate-shimmer {
+    @apply bg-muted;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--color-accent) 80%, transparent) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 2.5s linear infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.15;
+      transform: scale(1.08);
+    }
+  }
+
+  .animate-pulse-ring {
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
 }

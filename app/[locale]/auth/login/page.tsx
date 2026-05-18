@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { loginPasswordSchema } from "@/lib/forms-schemas";
 
 export default function LoginPage() {
   const t = useTranslations("Auth");
@@ -37,8 +38,18 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    const parsed = loginPasswordSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Invalid input");
+      setLoading(false);
+      return;
+    }
     try {
-      const res = await authClient.signIn.email({ email, password, callbackURL });
+      const res = await authClient.signIn.email({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        callbackURL,
+      });
       if (res.error) {
         setError(res.error.message ?? "Login failed");
         return;
@@ -122,8 +133,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 via-background to-indigo-50/80 p-4 dark:from-slate-950 dark:via-background dark:to-slate-900">
-      <Card className="w-full max-w-md border-primary/10 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center p-4 sm:p-6">
+      <Card className="surface-elevated w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -172,8 +183,8 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "…" : t("login")}
+                <Button type="submit" className="w-full" variant="gradient" loading={loading}>
+                  {t("login")}
                 </Button>
               </form>
             </TabsContent>

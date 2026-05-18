@@ -153,15 +153,15 @@ export function evaluateBiometricVerifyResult(json: unknown) {
     (m) => (scores[m] ?? 0) >= BIOMETRIC_VERIFY_MIN_MODALITY_SCORE
   );
 
+  const quality = typeof o.quality === "number" ? o.quality : null;
+  const embedding = o.embedding ?? o.template ?? null;
+
   const verified =
     o.verified === true &&
     confidence !== null &&
     confidence >= BIOMETRIC_VERIFY_MIN_CONFIDENCE &&
     allModalityScoresPresent &&
     allModalityScoresPass;
-
-  const quality = typeof o.quality === "number" ? o.quality : null;
-  const embedding = o.embedding ?? o.template ?? null;
 
   return {
     verified,

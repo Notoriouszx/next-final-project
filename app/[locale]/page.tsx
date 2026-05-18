@@ -14,7 +14,7 @@ export default async function HomePage({ params }: Props) {
   const user = await getSession();
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-sky-50/90 via-background to-indigo-50/40 dark:from-slate-950 dark:via-background dark:to-slate-900">
+    <div className="flex min-h-screen flex-col">
       <Navbar
         user={
           user
@@ -41,15 +41,15 @@ export default async function HomePage({ params }: Props) {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             {user ? (
-              <Button asChild size="lg" className="gap-2">
-                <Link href="/dashboard">
-                  {t("getStarted")}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+                <Button asChild size="lg" variant="gradient" className="gap-2">
+                  <Link href="/dashboard">
+                    {t("getStarted")}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
             ) : (
               <>
-                <Button asChild size="lg" className="gap-2">
+                <Button asChild size="lg" variant="gradient" className="gap-2">
                   <Link href="/auth/register">
                     {t("getStarted")}
                     <ArrowRight className="h-4 w-4" />

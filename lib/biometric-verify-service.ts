@@ -1,5 +1,9 @@
 import prisma from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
+import {
+  BIOMETRIC_MIN_QUALITY_SCORE,
+  validateBiometricVerifyPayload,
+} from "@/lib/biometric-image-validation";
 import type { NextRequest } from "next/server";
 
 export type BiometricModality = "face" | "iris" | "fingerprint";
@@ -153,15 +157,20 @@ export function evaluateBiometricVerifyResult(json: unknown) {
     (m) => (scores[m] ?? 0) >= BIOMETRIC_VERIFY_MIN_MODALITY_SCORE
   );
 
+  const quality = typeof o.quality === "number" ? o.quality : null;
+  const embedding = o.embedding ?? o.template ?? null;
+  const qualityGate = validateBiometricVerifyPayload(json);
+  const qualityRejected = !qualityGate.ok;
+  const qualityRejectReason = qualityRejected ? qualityGate.error : null;
+
   const verified =
+    !qualityRejected &&
     o.verified === true &&
     confidence !== null &&
     confidence >= BIOMETRIC_VERIFY_MIN_CONFIDENCE &&
     allModalityScoresPresent &&
-    allModalityScoresPass;
-
-  const quality = typeof o.quality === "number" ? o.quality : null;
-  const embedding = o.embedding ?? o.template ?? null;
+    allModalityScoresPass &&
+    (quality === null || quality >= BIOMETRIC_MIN_QUALITY_SCORE);
 
   return {
     verified,
@@ -172,6 +181,8 @@ export function evaluateBiometricVerifyResult(json: unknown) {
     upstreamVerified: o.verified === true,
     allModalityScoresPresent,
     allModalityScoresPass,
+    qualityRejected,
+    qualityRejectReason,
   };
 }
 

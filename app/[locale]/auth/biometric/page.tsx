@@ -49,6 +49,20 @@ function BiometricContent() {
   const onFileSelected = (files: FileList | null) => {
     if (!activeType || !files?.length) return;
     const file = files[0];
+    const maxBytes = 8 * 1024 * 1024;
+    const minBytes = 4 * 1024;
+    if (file.size < minBytes) {
+      setError("Image is too small — use a higher-resolution capture.");
+      return;
+    }
+    if (file.size > maxBytes) {
+      setError("Image must be 8 MB or smaller.");
+      return;
+    }
+    if (file.type && !/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+      setError("Only JPEG, PNG, or WebP images are accepted.");
+      return;
+    }
     setPendingFiles((prev) => ({ ...prev, [activeType]: file }));
     setStepStatus((prev) => ({ ...prev, [activeType]: "pending" }));
     setActiveType(null);
@@ -81,7 +95,13 @@ function BiometricContent() {
       const res = await fetch("/api/biometric/verify-upload", { method: "POST", body: fd });
       const data = (await res.json()) as { verified?: boolean; error?: string };
       if (!res.ok) {
-        setError(data?.error ?? "Verification failed");
+        setError(
+          typeof data?.error === "string"
+            ? data.error
+            : res.status === 422
+              ? "Image quality too low — use clearer, well-lit photos."
+              : "Verification failed"
+        );
         return;
       }
       if (data.verified) {

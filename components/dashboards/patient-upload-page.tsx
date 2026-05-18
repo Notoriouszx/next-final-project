@@ -16,6 +16,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+const ALLOWED_FILE_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+]);
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
+
+function validateMedicalFiles(files: FileList): string | null {
+  for (const file of Array.from(files)) {
+    if (!ALLOWED_FILE_TYPES.has(file.type)) {
+      return `${file.name} is not supported. Use PDF, JPG, or PNG.`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `${file.name} is too large. Maximum size is 15MB.`;
+    }
+  }
+  return null;
+}
+
 export function PatientUploadPage() {
   const router = useRouter();
   const [description, setDescription] = useState("");
@@ -32,6 +52,11 @@ export function PatientUploadPage() {
       const files = input?.files;
       if (!files?.length) {
         setError("Choose at least one PDF or image.");
+        return;
+      }
+      const validationError = validateMedicalFiles(files);
+      if (validationError) {
+        setError(validationError);
         return;
       }
 

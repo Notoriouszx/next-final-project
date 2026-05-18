@@ -18,7 +18,7 @@ const ToastContext = React.createContext<{
 export function useToast() {
   const ctx = React.useContext(ToastContext);
   if (!ctx) {
-    return { toast: (_t: ToastInput) => {} };
+    return { toast: () => {} };
   }
   return ctx;
 }

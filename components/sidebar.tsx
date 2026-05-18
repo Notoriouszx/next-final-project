@@ -16,6 +16,8 @@ interface SidebarProps {
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const items = getNavItemsForRole(role);
+  const dashboardPath = pathname.split("/dashboard")[1] ?? "";
+  const currentSegment = dashboardPath.split("/").filter(Boolean)[0] ?? "";
 
   return (
     <aside
@@ -36,7 +38,9 @@ export function Sidebar({ role }: SidebarProps) {
           {items.map((item) => {
             const Icon = item.icon;
             const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+              item.segment === ""
+                ? currentSegment === ""
+                : currentSegment === item.segment;
 
             return (
               <Link
@@ -72,7 +76,7 @@ export function Sidebar({ role }: SidebarProps) {
           <div className="flex items-center gap-2 font-medium text-foreground">
             <Activity className="h-4 w-4 shrink-0 text-primary" />
             <span className="overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-300 group-hover/sbar:opacity-100">
-              MediCare
+              <span className="text-red-500">Medi</span>Care
             </span>
           </div>
           <p className="mt-1 overflow-hidden whitespace-nowrap text-[11px] leading-snug text-muted-foreground opacity-0 transition-opacity duration-300 group-hover/sbar:opacity-100">

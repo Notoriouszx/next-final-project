@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 import { DoctorRecordsClient } from "@/components/doctor/doctor-records-client";
 
 export default async function DoctorRecordsPage({ user }: { user: User }) {
-  const now = new Date();
   const grants = await prisma.accessGrant.findMany({
     where: {
       doctorId: user.id,

@@ -1,57 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { put } from "@vercel/blob";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { emitRealtime } from "@/lib/realtime";
 import { roomsForPatientBroadcast } from "@/lib/patient-realtime";
-
-const ALLOWED = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-]);
+import {
+  MEDICAL_RECORD_ALLOWED_TYPES,
+  persistMedicalRecordFile,
+} from "@/lib/medical-record-storage";
 
 const metaSchema = z.object({
   description: z.string().max(500).optional(),
 });
-
-async function persistFile(
-  patientId: string,
-  file: File
-): Promise<{ fileUrl: string; fileType: string; fileSize: number }> {
-  const fileType = file.type || "application/octet-stream";
-  const fileSize = file.size;
-
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(
-      `records/${patientId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
-      file,
-      { access: "public", addRandomSuffix: true }
-    );
-    return { fileUrl: blob.url, fileType, fileSize };
-  }
-
-  if (process.env.NODE_ENV === "development") {
-    const dir = path.join(process.cwd(), "public", "uploads", patientId);
-    await mkdir(dir, { recursive: true });
-    const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const fp = path.join(dir, safeName);
-    await writeFile(fp, buffer);
-    return {
-      fileUrl: `/uploads/${patientId}/${safeName}`,
-      fileType,
-      fileSize,
-    };
-  }
-
-  throw new Error("BLOB_READ_WRITE_TOKEN is required for file uploads in production");
-}
 
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -77,7 +38,7 @@ export async function POST(request: NextRequest) {
     const created: { id: string; fileUrl: string; fileName: string | null }[] = [];
 
     for (const file of files) {
-      if (!ALLOWED.has(file.type)) {
+      if (!MEDICAL_RECORD_ALLOWED_TYPES.has(file.type)) {
         return NextResponse.json(
           { error: `Unsupported type: ${file.type}. Use PDF, JPG, or PNG.` },
           { status: 400 }
@@ -88,7 +49,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "File too large (max 15MB)" }, { status: 400 });
       }
 
-      const { fileUrl, fileType, fileSize } = await persistFile(session.user.id, file);
+      const { fileUrl, fileType, fileSize } = await persistMedicalRecordFile(
+        session.user.id,
+        file
+      );
 
       const record = await prisma.medicalRecord.create({
         data: {

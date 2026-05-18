@@ -4,7 +4,6 @@ import {
   Users,
   FileText,
   UserPlus,
-  Activity,
   Settings,
   ChartBar as BarChart3,
   Shield,

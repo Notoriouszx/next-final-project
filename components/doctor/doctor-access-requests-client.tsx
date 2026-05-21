@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { greenButtonClass } from "@/lib/control-styles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -38,7 +39,9 @@ export function DoctorAccessRequestsClient({
         </CardHeader>
         <CardContent className="space-y-3">
           {pending.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No pending requests.</p>
+            <p className="text-sm text-muted-foreground">
+              No pending requests.
+            </p>
           ) : (
             pending.map((p) => (
               <div
@@ -47,17 +50,24 @@ export function DoctorAccessRequestsClient({
               >
                 <div className="min-w-0">
                   <p className="font-medium">{p.patientName}</p>
-                  <p className="text-sm text-muted-foreground">{p.patientEmail}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {p.patientEmail}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Requested {new Date(p.createdAt).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Badge variant="warning">Pending</Badge>
+                  <Badge
+                    variant="warning"
+                    className="rounded-full border border-amber-600/50 bg-amber-950/40 px-3 py-1 text-sm font-medium text-amber-500"
+                  >
+                    Pending
+                  </Badge>
                   <Button
                     variant="success"
                     size="sm"
-                    className="hover:brightness-110"
+                    className={`${greenButtonClass} border border-green-700`}
                     onClick={() => openResolve(p)}
                   >
                     Resolve
@@ -69,7 +79,11 @@ export function DoctorAccessRequestsClient({
         </CardContent>
       </Card>
 
-      <ResolveAccessDialog grant={selected} open={dialogOpen} onOpenChange={setDialogOpen} />
+      <ResolveAccessDialog
+        grant={selected}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 }

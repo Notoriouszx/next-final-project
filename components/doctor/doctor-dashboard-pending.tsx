@@ -7,6 +7,7 @@ import {
   ResolveAccessDialog,
   type PendingGrantRow,
 } from "@/components/doctor/resolve-access-dialog";
+import { greenButtonClass } from "@/lib/control-styles";
 
 export function DoctorDashboardPending({
   pending,
@@ -42,13 +43,13 @@ export function DoctorDashboardPending({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-500 dark:text-amber-400">
                 Pending
               </span>
               <Button
                 size="sm"
                 variant="success"
-                className="hover:brightness-110"
+                className={`${greenButtonClass} border border-green-700`}
                 onClick={() => {
                   setSelected(request);
                   setOpen(true);
@@ -59,11 +60,19 @@ export function DoctorDashboardPending({
             </div>
           </div>
         ))}
-        <Button variant="link" className="h-auto p-0" asChild>
+        <Button
+          variant="link"
+          className={`${greenButtonClass} border border-green-700`}
+          asChild
+        >
           <Link href="/dashboard/access-requests">View all requests</Link>
         </Button>
       </div>
-      <ResolveAccessDialog grant={selected} open={open} onOpenChange={setOpen} />
+      <ResolveAccessDialog
+        grant={selected}
+        open={open}
+        onOpenChange={setOpen}
+      />
     </>
   );
 }

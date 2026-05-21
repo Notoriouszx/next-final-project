@@ -206,7 +206,7 @@ export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{p.email}</TableCell>
                       <TableCell className="text-sm">
-                        <p>Since {new Date(p.grantedAt).toLocaleDateString()}</p>
+                        <p className="mt-1 w-fit rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">Since {new Date(p.grantedAt).toLocaleDateString()}</p>
                         <p className="mt-1 w-fit rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                           Until {new Date(p.expiresAt).toLocaleDateString()}
                         </p>

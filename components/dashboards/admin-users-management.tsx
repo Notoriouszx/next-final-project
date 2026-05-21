@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UserX } from "lucide-react";
+import { Trash2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GooeyInput } from "@/components/ui/gooey-input";
@@ -210,13 +210,17 @@ export function AdminUsersManagement() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Users Management</h1>
-        <p className="text-muted-foreground">Search, filter, edit and deactivate platform users.</p>
+        <p className="text-muted-foreground">
+          Search, filter, edit and deactivate platform users.
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
-          <CardDescription>Production-ready CRUD table with RBAC-backed actions.</CardDescription>
+          <CardDescription>
+            Production-ready CRUD table with RBAC-backed actions.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
@@ -273,7 +277,9 @@ export function AdminUsersManagement() {
             <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed text-center">
               <UserX className="mb-2 h-6 w-6 text-muted-foreground" />
               <p className="text-sm font-medium">No users found</p>
-              <p className="text-xs text-muted-foreground">Try changing your filters.</p>
+              <p className="text-xs text-muted-foreground">
+                Try changing your filters.
+              </p>
             </div>
           ) : (
             <Table>
@@ -293,7 +299,10 @@ export function AdminUsersManagement() {
                     <TableCell className="font-medium">{u.name}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <Badge variant={roleBadgeVariant(u.role)} className="capitalize">
+                      <Badge
+                        variant={roleBadgeVariant(u.role)}
+                        className="capitalize"
+                      >
                         {u.role}
                       </Badge>
                     </TableCell>
@@ -302,20 +311,30 @@ export function AdminUsersManagement() {
                         {u.isActive ? "active" : "inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {new Date(u.createdAt).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={normalButtonClass}
-                        onClick={() => openEdit(u)}
-                      >
-                        Edit
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(u)}>
-                        Delete
-                      </Button>
+                        {/* Edit button – green */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={greenButtonClass}
+                          onClick={() => openEdit(u)}
+                        >
+                          Edit
+                        </Button>
+
+                        {/* Delete button – custom red with X icon */}
+                        <Button
+                          size="sm"
+                          onClick={() => setDeleteTarget(u)}
+                          className="border border-red-600/50 bg-red-950/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -352,11 +371,16 @@ export function AdminUsersManagement() {
         </CardContent>
       </Card>
 
-      <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => !open && setSelected(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update identity, role, and activation status.</DialogDescription>
+            <DialogDescription>
+              Update identity, role, and activation status.
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={onUpdate} className="space-y-4">
@@ -369,7 +393,9 @@ export function AdminUsersManagement() {
               <label className="text-sm font-medium">Role</label>
               <Select
                 value={watchedRole}
-                onValueChange={(v) => form.setValue("role", v as FormData["role"])}
+                onValueChange={(v) =>
+                  form.setValue("role", v as FormData["role"])
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Role" />
@@ -399,36 +425,46 @@ export function AdminUsersManagement() {
             </div>
 
             {(watchedRole === "doctor" || watchedRole === "nurse") && (
-            <div className="space-y-2 rounded-md border border-dashed p-3">
-              <p className="text-sm font-medium">Biometric credentials</p>
-              <p className="text-xs text-muted-foreground">
-                Upload reference images for this user (face, iris, fingerprint). Name files with
-                face, iris, or finger so they map correctly.
-              </p>
-              <input
-                ref={credentialsInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => void onCredentialsSelected(e.target.files)}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className={normalButtonClass}
-                disabled={enrolling || submitting}
-                onClick={() => credentialsInputRef.current?.click()}
-              >
-                {enrolling ? "Uploading…" : "Upload credentials"}
-              </Button>
-              {enrollMessage ? <p className="text-xs text-green-600">{enrollMessage}</p> : null}
-              {enrollError ? <p className="text-xs text-destructive">{enrollError}</p> : null}
-            </div>
+              <div className="space-y-2 rounded-md border border-dashed p-3">
+                <p className="text-sm font-medium">Biometric credentials</p>
+                <p className="text-xs text-muted-foreground">
+                  Upload reference images for this user (face, iris,
+                  fingerprint). Name files with face, iris, or finger so they
+                  map correctly.
+                </p>
+                <input
+                  ref={credentialsInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => void onCredentialsSelected(e.target.files)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={greenButtonClass}
+                  disabled={enrolling || submitting}
+                  onClick={() => credentialsInputRef.current?.click()}
+                >
+                  {enrolling ? "Uploading…" : "Upload credentials"}
+                </Button>
+                {enrollMessage ? (
+                  <p className="text-xs text-green-600">{enrollMessage}</p>
+                ) : null}
+                {enrollError ? (
+                  <p className="text-xs text-destructive">{enrollError}</p>
+                ) : null}
+              </div>
             )}
 
             <DialogFooter>
-              <Button type="button" variant="destructive" onClick={() => setSelected(null)}>
+              <Button
+                className="bg-red-500 text-white hover:bg-red-500/80 transition-transform duration-200"
+                size="default"
+                onClick={() => setDeleteTarget(null)}
+              >
+                <X className="size-4 mr-1" />
                 Cancel
               </Button>
               <Button
@@ -444,20 +480,28 @@ export function AdminUsersManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              This permanently deletes the user and all of their biometric data, sessions, and role-specific
-              access grants. Other patients&apos; records are not affected.
+              This permanently deletes the user and all of their biometric data,
+              sessions, and role-specific access grants. Other patients&apos;
+              records are not affected.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="destructive" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" disabled={submitting} onClick={onDelete}>
+            <Button
+              variant="destructive"
+              disabled={submitting}
+              onClick={onDelete}
+            >
               Confirm Delete
             </Button>
           </DialogFooter>

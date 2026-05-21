@@ -124,7 +124,7 @@ export default async function PatientDashboard({ user, periodDays }: PatientDash
           <p className="text-muted-foreground">Welcome back, {user.name}</p>
         </div>
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Brokerage</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Date Range Selector</p>
           <div className="flex flex-wrap items-center gap-2">
             {[7, 30, 90].map((days) => (
               <Button

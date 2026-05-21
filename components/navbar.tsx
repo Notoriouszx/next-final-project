@@ -23,6 +23,7 @@ import { roleBadgeVariant } from "@/lib/role-badge";
 import type { UserRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ROLE_ACCENT } from "@/lib/navigation-config";
+import { blueButtonClass, greenButtonClass } from "@/lib/control-styles";
 
 interface NavbarProps {
   user?: {
@@ -127,10 +128,10 @@ export function Navbar({ user }: NavbarProps) {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild size="sm">
+              <Button variant="outline" asChild size="sm" className={blueButtonClass}>
                 <Link href="/auth/login">{t("login") ?? "Login"}</Link>
               </Button>
-              <Button variant="gradient" asChild size="sm">
+              <Button variant="outline" asChild size="sm" className={greenButtonClass}>
                 <Link href="/auth/register">{t("register") ?? "Sign up"}</Link>
               </Button>
             </div>

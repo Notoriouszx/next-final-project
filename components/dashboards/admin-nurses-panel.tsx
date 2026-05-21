@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { biometricStatusBadge, resolveBiometricStatus } from "@/lib/biometric-status";
+import { amberButtonClass, blueButtonClass, greenButtonClass } from "@/lib/control-styles";
 
 const addNurseSchema = z.object({
   name: z.string().min(2),
@@ -81,7 +82,9 @@ export function AdminNursesPanel() {
           <h1 className="text-3xl font-bold tracking-tight">Nurses</h1>
           <p className="text-muted-foreground">Simplified staff management with activity tracking.</p>
         </div>
-        <Button onClick={() => setOpenAdd(true)}>Add Nurse</Button>
+        <Button variant="outline" className={blueButtonClass} onClick={() => setOpenAdd(true)}>
+          Add Nurse
+        </Button>
       </div>
 
       <Card>
@@ -128,7 +131,12 @@ export function AdminNursesPanel() {
                       {nurse.lastActivity ? new Date(nurse.lastActivity).toLocaleString() : "No activity"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedId(nurse.id)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={amberButtonClass}
+                        onClick={() => setSelectedId(nurse.id)}
+                      >
                         View Profile
                       </Button>
                     </TableCell>
@@ -153,7 +161,9 @@ export function AdminNursesPanel() {
               <Button variant="outline" type="button" onClick={() => setOpenAdd(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Create Nurse</Button>
+              <Button type="submit" variant="outline" className={greenButtonClass}>
+                Create Nurse
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

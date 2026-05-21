@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { normalButtonClass } from "@/lib/control-styles";
 
 export default async function PatientMyRecordsPage({ user }: { user: User }) {
   const records = await prisma.medicalRecord.findMany({
@@ -62,14 +64,11 @@ export default async function PatientMyRecordsPage({ user }: { user: User }) {
                       {r.createdAt.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-end">
-                      <a
-                        href={r.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
-                      >
-                        Open <ExternalLink className="h-3 w-3" />
-                      </a>
+                      <Button asChild size="sm" variant="outline" className={normalButtonClass}>
+                        <a href={r.fileUrl} target="_blank" rel="noreferrer">
+                          Open <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

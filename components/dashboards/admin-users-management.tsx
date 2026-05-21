@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, UserX } from "lucide-react";
+import { UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GooeyInput } from "@/components/ui/gooey-input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { roleBadgeVariant } from "@/lib/role-badge";
+import { greenButtonClass, normalButtonClass } from "@/lib/control-styles";
 
 type UserItem = {
   id: string;
@@ -218,41 +220,47 @@ export function AdminUsersManagement() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="relative md:col-span-2">
-              <Search className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
+            <div className="md:col-span-2">
+              <GooeyInput
                 placeholder="Search by name or email"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="ps-9"
               />
             </div>
-            <select
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            <Select
               value={role}
-              onChange={(e) => {
-                setRole(e.target.value);
+              onValueChange={(value) => {
+                setRole(value);
                 setPage(1);
               }}
             >
-              <option value="all">All roles</option>
-              <option value="admin">Admin</option>
-              <option value="doctor">Doctor</option>
-              <option value="nurse">Nurse</option>
-              <option value="patient">Patient</option>
-            </select>
-            <select
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="doctor">Doctor</SelectItem>
+                <SelectItem value="nurse">Nurse</SelectItem>
+                <SelectItem value="patient">Patient</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(value) => {
+                setStatus(value);
                 setPage(1);
               }}
             >
-              <option value="all">All status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="All status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {loading ? (
@@ -295,13 +303,20 @@ export function AdminUsersManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="space-x-2 text-right">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(u)}>
+                    <TableCell>
+                      <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={normalButtonClass}
+                        onClick={() => openEdit(u)}
+                      >
                         Edit
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(u)}>
                         Delete
                       </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -313,10 +328,11 @@ export function AdminUsersManagement() {
             <p className="text-xs text-muted-foreground">
               Page {page} of {totalPages}
             </p>
-            <div className="space-x-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
+                className={normalButtonClass}
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
@@ -325,6 +341,7 @@ export function AdminUsersManagement() {
               <Button
                 variant="outline"
                 size="sm"
+                className={normalButtonClass}
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               >
@@ -399,6 +416,7 @@ export function AdminUsersManagement() {
               <Button
                 type="button"
                 variant="outline"
+                className={normalButtonClass}
                 disabled={enrolling || submitting}
                 onClick={() => credentialsInputRef.current?.click()}
               >
@@ -410,10 +428,15 @@ export function AdminUsersManagement() {
             )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setSelected(null)}>
+              <Button type="button" variant="destructive" onClick={() => setSelected(null)}>
                 Cancel
               </Button>
-              <Button type="submit" variant="success" disabled={submitting}>
+              <Button
+                type="submit"
+                variant="outline"
+                className={greenButtonClass}
+                disabled={submitting}
+              >
                 Save changes
               </Button>
             </DialogFooter>
@@ -431,7 +454,7 @@ export function AdminUsersManagement() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            <Button variant="destructive" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
             <Button variant="destructive" disabled={submitting} onClick={onDelete}>

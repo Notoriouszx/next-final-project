@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileText, Search } from "lucide-react";
+import { Eye, FileText, Search } from "lucide-react";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorRecordsFilterSchema } from "@/lib/doctor-schemas";
+import { normalButtonClass } from "@/lib/control-styles";
 
 export type DoctorRecordRow = {
   id: string;
@@ -134,8 +135,9 @@ export function DoctorRecordsClient({ records }: { records: DoctorRecordRow[] })
                         {new Date(r.createdAt).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" asChild>
+                        <Button size="sm" variant="outline" className={normalButtonClass} asChild>
                           <a href={r.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-3.5 w-3.5" />
                             View
                           </a>
                         </Button>

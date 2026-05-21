@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Key, Search } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { GooeyInput } from "@/components/ui/gooey-input";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -29,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { roleBadgeVariant } from "@/lib/role-badge";
+import { greenButtonClass } from "@/lib/control-styles";
 
 type Provider = {
   id: string;
@@ -104,29 +106,27 @@ export function PatientGrantAccessPage() {
       </div>
 
       {grantResult ? (
-        <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Key className="h-4 w-4" />
-              Access credentials
-            </CardTitle>
-            <CardDescription>Share securely with your provider (mock delivery).</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+        <Alert variant="success">
+          <AlertCircleIcon className="size-4" />
+          <AlertTitle>Access credentials</AlertTitle>
+          <AlertDescription>
+            <p className="mb-2 text-sm">Share securely with your provider.</p>
+            <ul className="list-inside list-disc space-y-1 text-sm">
             {grantResult.otp ? (
-              <p>
+              <li>
                 <span className="font-medium">OTP:</span>{" "}
                 <code className="rounded bg-background px-2 py-0.5">{grantResult.otp}</code>
-              </p>
+              </li>
             ) : null}
-            <p>
+            <li>
               <span className="font-medium">Magic link path:</span>{" "}
               <code className="break-all rounded bg-background px-2 py-0.5">
                 {grantResult.magicLinkPath}
               </code>
-            </p>
-          </CardContent>
-        </Card>
+            </li>
+            </ul>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       <Card>
@@ -136,10 +136,8 @@ export function PatientGrantAccessPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                className="ps-9"
+            <div className="flex-1">
+              <GooeyInput
                 placeholder="Search by name"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -188,6 +186,8 @@ export function PatientGrantAccessPage() {
                     <TableCell className="text-end">
                       <Button
                         size="sm"
+                        variant="outline"
+                        className={greenButtonClass}
                         disabled={busyId === p.id}
                         onClick={() => void grant(p)}
                       >

@@ -3,7 +3,8 @@ import { Navbar } from "@/components/navbar";
 import { getSession } from "@/lib/session";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Activity, Shield, Stethoscope, ArrowRight } from "lucide-react";
+import { Activity, Shield, Stethoscope } from "lucide-react";
+import { normalButtonClass } from "@/lib/control-styles";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -41,21 +42,31 @@ export default async function HomePage({ params }: Props) {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             {user ? (
-                <Button asChild size="lg" variant="gradient" className="gap-2">
+                <Button
+                  asChild
+                  className="group relative h-auto cursor-pointer overflow-hidden rounded-full border border-primary px-4 py-2 text-base font-medium text-white transition-all"
+                >
                   <Link href="/dashboard">
-                    {t("getStarted")}
-                    <ArrowRight className="h-4 w-4" />
+                    <span className="absolute left-1/2 top-full h-8 w-8 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-white transition-transform duration-700 ease-in-out group-hover:scale-[18] dark:bg-gray-950" />
+                    <span className="relative z-10 transition-colors duration-500 group-hover:text-gray-950 dark:group-hover:text-white">
+                      {t("getStarted")}
+                    </span>
                   </Link>
                 </Button>
             ) : (
               <>
-                <Button asChild size="lg" variant="gradient" className="gap-2">
+                <Button
+                  asChild
+                  className="group relative h-auto cursor-pointer overflow-hidden rounded-full border border-primary px-4 py-2 text-base font-medium text-white transition-all"
+                >
                   <Link href="/auth/register">
-                    {t("getStarted")}
-                    <ArrowRight className="h-4 w-4" />
+                    <span className="absolute left-1/2 top-full h-8 w-8 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-white transition-transform duration-700 ease-in-out group-hover:scale-[18] dark:bg-gray-950" />
+                    <span className="relative z-10 transition-colors duration-500 group-hover:text-gray-950 dark:group-hover:text-white">
+                      {t("getStarted")}
+                    </span>
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
+                <Button asChild size="lg" variant="outline" className={normalButtonClass}>
                   <Link href="/auth/login">{t("learnMore")}</Link>
                 </Button>
               </>

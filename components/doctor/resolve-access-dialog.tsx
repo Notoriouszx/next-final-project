@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Link2 } from "lucide-react";
+import { KeyRound, Link2, X } from "lucide-react";
+import { greenButtonClass } from "@/lib/control-styles";
 import {
   Dialog,
   DialogContent,
@@ -97,7 +98,10 @@ export function ResolveAccessDialog({
         <DialogHeader>
           <DialogTitle>Resolve access request</DialogTitle>
           <DialogDescription>
-            Confirm access for <span className="font-medium text-foreground">{grant?.patientName}</span>{" "}
+            Confirm access for{" "}
+            <span className="font-medium text-foreground">
+              {grant?.patientName}
+            </span>{" "}
             using the OTP or magic link the patient shared with you.
           </DialogDescription>
         </DialogHeader>
@@ -132,7 +136,9 @@ export function ResolveAccessDialog({
                 {...form.register("otp")}
               />
               {form.formState.errors.otp ? (
-                <p className="text-xs text-destructive">{form.formState.errors.otp.message}</p>
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.otp.message}
+                </p>
               ) : null}
             </TabsContent>
 
@@ -144,7 +150,8 @@ export function ResolveAccessDialog({
                 {...form.register("magicLink")}
               />
               <p className="text-xs text-muted-foreground">
-                Full verify path is not configured yet — paste the token value from the patient.
+                Full verify path is not configured yet — paste the token value
+                from the patient.
               </p>
               {form.formState.errors.magicLink ? (
                 <p className="text-xs text-destructive">
@@ -160,14 +167,19 @@ export function ResolveAccessDialog({
             ) : null}
 
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={resetAndClose}>
+              <Button
+                type="button"
+                onClick={resetAndClose}
+                className=" transition-transform duration-200 bg-red-500 text-white hover:bg-red-500/80 cursor-pointer gap-2"
+              >
+                <X className="size-4" />
                 Cancel
               </Button>
               <Button
                 type="submit"
                 variant="success"
                 loading={submitting}
-                className="hover:brightness-110"
+                className={`${greenButtonClass} border border-green-700`}
               >
                 Submit
               </Button>

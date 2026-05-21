@@ -187,9 +187,9 @@ export default async function DoctorDashboard({ user }: DoctorDashboardProps) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-300">
                     <CheckCircle className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs font-semibold">
                       Expires: {grant.expiresAt.toLocaleDateString()}
                     </span>
                   </div>

@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { greenButtonClass } from "@/lib/control-styles";
 
 const ALLOWED_FILE_TYPES = new Set([
   "application/pdf",
@@ -156,7 +157,13 @@ export function PatientUploadPage() {
               </div>
             ) : null}
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" variant="success" loading={busy} disabled={busy}>
+            <Button
+              type="submit"
+              variant="outline"
+              className={greenButtonClass}
+              loading={busy}
+              disabled={busy}
+            >
               Upload files
             </Button>
           </form>

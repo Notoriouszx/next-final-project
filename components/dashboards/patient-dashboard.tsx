@@ -20,7 +20,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { roleBadgeVariant } from "@/lib/role-badge";
+import { greenButtonClass, normalButtonClass } from "@/lib/control-styles";
 
 interface PatientDashboardProps {
   user: User;
@@ -121,20 +123,23 @@ export default async function PatientDashboard({ user, periodDays }: PatientDash
           <h1 className="text-3xl font-bold tracking-tight">Patient Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, {user.name}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {[7, 30, 90].map((days) => (
-            <Link
-              key={days}
-              href={{ pathname: "/dashboard", query: { period: String(days) } }}
-              className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-                periodDays === days
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-input hover:bg-accent"
-              }`}
-            >
-              {days}d
-            </Link>
-          ))}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Date Range Selector</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {[7, 30, 90].map((days) => (
+              <Button
+                key={days}
+                asChild
+                variant="outline"
+                size="sm"
+                className={periodDays === days ? greenButtonClass : normalButtonClass}
+              >
+                <Link href={{ pathname: "/dashboard", query: { period: String(days) } }}>
+                  {days}d
+                </Link>
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 

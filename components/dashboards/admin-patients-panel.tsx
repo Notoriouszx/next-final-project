@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { greenButtonClass, violetButtonClass } from "@/lib/control-styles";
 
 type PatientItem = {
   id: string;
@@ -107,7 +108,12 @@ export function AdminPatientsPanel() {
                     <TableCell>{patient.lastUpload ? new Date(patient.lastUpload).toLocaleDateString() : "-"}</TableCell>
                     <TableCell>{patient.accessGrantedCount}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedId(patient.id)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={violetButtonClass}
+                        onClick={() => setSelectedId(patient.id)}
+                      >
                         View Profile
                       </Button>
                     </TableCell>
@@ -142,7 +148,7 @@ export function AdminPatientsPanel() {
                       <span>
                         {grant.doctor?.name ?? grant.nurse?.name ?? "Unassigned"} - {grant.status}
                       </span>
-                      <Button size="sm" variant="outline" onClick={() => revokeAccess(grant.id)}>
+                      <Button size="sm" variant="destructive" onClick={() => revokeAccess(grant.id)}>
                         Revoke access
                       </Button>
                     </li>
@@ -160,7 +166,7 @@ export function AdminPatientsPanel() {
                   </Badge>
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <Button size="sm" onClick={generateOtp}>
+                  <Button size="sm" variant="outline" className={greenButtonClass} onClick={generateOtp}>
                     Generate OTP / magic link
                   </Button>
                 </div>

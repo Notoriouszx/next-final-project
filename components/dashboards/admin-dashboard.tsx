@@ -13,6 +13,8 @@ import { AdminStatsCards } from "./admin-stats-cards";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { roleBadgeVariant } from "@/lib/role-badge";
+import { Button } from "../ui/button";
+import { greenButtonClass, normalButtonClass } from "@/lib/control-styles";
 
 interface AdminDashboardProps {
   user: User;
@@ -166,20 +168,32 @@ export default async function AdminDashboard({
         <p className="text-muted-foreground">Welcome back, {user.name}</p>
       </div>
 
-      <div className="flex items-center gap-2">
-        {[7, 30, 90].map((days) => (
-          <Link
-            key={days}
-            href={{ pathname: "/dashboard", query: { period: String(days) } }}
-            className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-              periodDays === days
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-input hover:bg-accent"
-            }`}
-          >
-            {days}d
-          </Link>
-        ))}
+      <div className="flex flex-col gap-2.5">
+        <p className="text-xs font-semibold uppercase text-muted-foreground">
+          Date Range Selector
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {[7, 30, 90].map((days) => (
+            <Button
+              key={days}
+              asChild
+              variant="outline"
+              size="sm"
+              className={
+                periodDays === days ? greenButtonClass : normalButtonClass
+              }
+            >
+              <Link
+                href={{
+                  pathname: "/dashboard",
+                  query: { period: String(days) },
+                }}
+              >
+                {days}d
+              </Link>
+            </Button>
+          ))}
+        </div>
       </div>
 
       <AdminStatsCards stats={stats} periodLabel={`${periodDays} days`} />
@@ -190,29 +204,37 @@ export default async function AdminDashboard({
         <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest system activities and events</CardDescription>
+            <CardDescription>
+              Latest system activities and events
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {recentActivities.length > 0 ? (
                 recentActivities.map(
-                  (activity: { id: string; action: string; timestamp: Date }) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-3 border-s-2 border-primary/25 ps-3 transition-colors hover:border-primary/50"
-                  >
-                    <Activity className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.timestamp.toLocaleString()}
-                      </p>
+                  (activity: {
+                    id: string;
+                    action: string;
+                    timestamp: Date;
+                  }) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-3 border-s-2 border-primary/25 ps-3 transition-colors hover:border-primary/50"
+                    >
+                      <Activity className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="text-sm font-medium">{activity.action}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.timestamp.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  )
+                  ),
                 )
               ) : (
-                <p className="text-sm text-muted-foreground">No recent activities</p>
+                <p className="text-sm text-muted-foreground">
+                  No recent activities
+                </p>
               )}
             </div>
           </CardContent>
@@ -221,7 +243,9 @@ export default async function AdminDashboard({
         <Card className="border-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle>System Alerts</CardTitle>
-            <CardDescription>Important notifications and warnings</CardDescription>
+            <CardDescription>
+              Important notifications and warnings
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -239,7 +263,8 @@ export default async function AdminDashboard({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">New registrations</p>
                   <p className="text-xs text-muted-foreground">
-                    {analytics.totalUsers.value} new accounts in selected period.
+                    {analytics.totalUsers.value} new accounts in selected
+                    period.
                   </p>
                 </div>
               </div>
@@ -264,31 +289,36 @@ export default async function AdminDashboard({
                   role: string;
                   createdAt: Date;
                 }) => (
-                <div
-                  key={u.id}
-                  className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <span className="text-sm font-medium">
-                        {u.name.charAt(0).toUpperCase()}
-                      </span>
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <span className="text-sm font-medium">
+                          {u.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{u.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {u.email}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{u.name}</p>
-                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                    <div className="text-end">
+                      <Badge
+                        variant={roleBadgeVariant(u.role)}
+                        className="capitalize"
+                      >
+                        {u.role}
+                      </Badge>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {u.createdAt.toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-end">
-                    <Badge variant={roleBadgeVariant(u.role)} className="capitalize">
-                      {u.role}
-                    </Badge>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {u.createdAt.toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                )
+                ),
               )
             ) : (
               <p className="text-sm text-muted-foreground">No users yet</p>

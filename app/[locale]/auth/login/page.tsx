@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { loginPasswordSchema } from "@/lib/forms-schemas";
+import { blueButtonClass, greenButtonClass, normalButtonClass } from "@/lib/control-styles";
 
 export default function LoginPage() {
   const t = useTranslations("Auth");
@@ -148,10 +149,25 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="password" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="password">Password</TabsTrigger>
-              <TabsTrigger value="magic">Magic link</TabsTrigger>
-              <TabsTrigger value="otp">OTP</TabsTrigger>
+            <TabsList className="grid h-auto w-full grid-cols-3 gap-2 bg-transparent p-0">
+              <TabsTrigger
+                value="password"
+                className={`${normalButtonClass} h-10 rounded-lg border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10`}
+              >
+                Password
+              </TabsTrigger>
+              <TabsTrigger
+                value="magic"
+                className={`${normalButtonClass} h-10 rounded-lg border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10`}
+              >
+                Magic link
+              </TabsTrigger>
+              <TabsTrigger
+                value="otp"
+                className={`${normalButtonClass} h-10 rounded-lg border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10`}
+              >
+                OTP
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="password">
@@ -183,7 +199,12 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" variant="gradient" loading={loading}>
+                <Button
+                  type="submit"
+                  className={`w-full ${blueButtonClass}`}
+                  variant="outline"
+                  loading={loading}
+                >
                   {t("login")}
                 </Button>
               </form>
@@ -212,7 +233,12 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button
+                      type="submit"
+                      className={`w-full ${blueButtonClass}`}
+                      variant="outline"
+                      disabled={loading}
+                    >
                       {loading ? "…" : "Send magic link"}
                     </Button>
                   </>
@@ -238,7 +264,12 @@ export default function LoginPage() {
                       required
                     />
                   </div>
-                  <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className={`w-full ${blueButtonClass}`}
+                    disabled={loading}
+                  >
                     {loading ? "…" : "Send OTP"}
                   </Button>
                 </form>
@@ -255,7 +286,12 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button
+                      type="submit"
+                      className={`w-full ${greenButtonClass}`}
+                      variant="outline"
+                      disabled={loading}
+                    >
                       {loading ? "…" : t("verifyOTP")}
                     </Button>
                   </form>

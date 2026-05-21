@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { greenButtonClass, normalButtonClass } from "@/lib/control-styles";
 
 export default async function PatientMyRecordsPage({ user }: { user: User }) {
   const records = await prisma.medicalRecord.findMany({
@@ -51,25 +53,36 @@ export default async function PatientMyRecordsPage({ user }: { user: User }) {
               <TableBody>
                 {records.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.fileName ?? "Record"}</TableCell>
+                    <TableCell className="font-medium">
+                      {r.fileName ?? "Record"}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {r.fileType ?? "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {r.fileSize != null ? `${(r.fileSize / 1024).toFixed(1)} KB` : "—"}
+                      {r.fileSize != null
+                        ? `${(r.fileSize / 1024).toFixed(1)} KB`
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-sm">
                       {r.createdAt.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-end">
-                      <a
-                        href={r.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className={`${greenButtonClass} border border-green-700`}
                       >
-                        Open <ExternalLink className="h-3 w-3" />
-                      </a>
+                        <a
+                          href={r.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="gap-1.5"
+                        >
+                          Open <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

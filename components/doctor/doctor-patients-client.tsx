@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingOverlay, ProgressBar } from "@/components/ui/loading";
 import { PrescriptionDialog } from "@/components/doctor/prescription-dialog";
+import { blueButtonClass, greenButtonClass, normalButtonClass } from "@/lib/control-styles";
 
 export type ActivePatientRow = {
   grantId: string;
@@ -205,8 +206,8 @@ export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{p.email}</TableCell>
                       <TableCell className="text-sm">
-                        <p>Since {new Date(p.grantedAt).toLocaleDateString()}</p>
-                        <p className="text-muted-foreground">
+                        <p className="mt-1 w-fit rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">Since {new Date(p.grantedAt).toLocaleDateString()}</p>
+                        <p className="mt-1 w-fit rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                           Until {new Date(p.expiresAt).toLocaleDateString()}
                         </p>
                       </TableCell>
@@ -214,8 +215,8 @@ export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[
                         <div className="flex flex-wrap justify-end gap-2">
                           <Button
                             size="sm"
-                            variant="info"
-                            className="gap-1"
+                            variant="outline"
+                            className={`gap-1 ${normalButtonClass}`}
                             onClick={() => setRxPatient(p)}
                           >
                             <Pill className="h-3.5 w-3.5" />
@@ -224,7 +225,7 @@ export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[
                           <Button
                             size="sm"
                             variant="outline"
-                            className="gap-1"
+                            className={`gap-1 ${greenButtonClass}`}
                             disabled={uploading}
                             onClick={() => triggerUpload(p.patientId)}
                           >
@@ -233,8 +234,8 @@ export function DoctorPatientsClient({ patients }: { patients: ActivePatientRow[
                           </Button>
                           <Button
                             size="sm"
-                            variant="secondary"
-                            className="gap-1"
+                            variant="outline"
+                            className={`gap-1 ${blueButtonClass}`}
                             loading={resolvingId === p.grantId}
                             onClick={() => void markResolved(p.grantId)}
                           >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileText, Search } from "lucide-react";
+import { Eye, FileText, Search } from "lucide-react";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorRecordsFilterSchema } from "@/lib/doctor-schemas";
+import { normalButtonClass } from "@/lib/control-styles";
 
 export type DoctorRecordRow = {
   id: string;
@@ -107,7 +108,9 @@ export function DoctorRecordsClient({ records }: { records: DoctorRecordRow[] })
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No records match your filters.</p>
+            <p className="text-sm text-muted-foreground">
+              No records match your filters.
+            </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border">
               <Table>
@@ -123,7 +126,9 @@ export function DoctorRecordsClient({ records }: { records: DoctorRecordRow[] })
                 <TableBody>
                   {filtered.map((r) => (
                     <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.patientName}</TableCell>
+                      <TableCell className="font-medium">
+                        {r.patientName}
+                      </TableCell>
                       <TableCell>{r.fileName ?? "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
@@ -134,8 +139,18 @@ export function DoctorRecordsClient({ records }: { records: DoctorRecordRow[] })
                         {new Date(r.createdAt).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" asChild>
-                          <a href={r.fileUrl} target="_blank" rel="noopener noreferrer">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border border-sky-600 bg-sky-950/20 text-sky-400 hover:bg-sky-500/10 hover:text-sky-300 gap-1.5 transition-colors"
+                          asChild
+                        >
+                          <a
+                            href={r.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
                             View
                           </a>
                         </Button>

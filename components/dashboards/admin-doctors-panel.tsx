@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { biometricStatusBadge, resolveBiometricStatus } from "@/lib/biometric-status";
+import { blueButtonClass, greenButtonClass, tealButtonClass } from "@/lib/control-styles";
 
 const addDoctorSchema = z.object({
   name: z.string().min(2),
@@ -91,7 +92,7 @@ export function AdminDoctorsPanel() {
         title="Doctors"
         description="Manage medical staff, biometric enrollment, and patient load."
       >
-        <Button variant="info" onClick={() => setOpenAdd(true)}>
+        <Button variant="outline" className={blueButtonClass} onClick={() => setOpenAdd(true)}>
           Add doctor
         </Button>
       </PageHeader>
@@ -135,7 +136,12 @@ export function AdminDoctorsPanel() {
                       {doctor.lastActivity ? new Date(doctor.lastActivity).toLocaleString() : "No activity"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedId(doctor.id)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={tealButtonClass}
+                        onClick={() => setSelectedId(doctor.id)}
+                      >
                         View Profile
                       </Button>
                     </TableCell>
@@ -160,7 +166,12 @@ export function AdminDoctorsPanel() {
               <Button variant="outline" type="button" onClick={() => setOpenAdd(false)}>
                 Cancel
               </Button>
-              <Button type="submit" variant="success" loading={submitting}>
+              <Button
+                type="submit"
+                variant="outline"
+                className={greenButtonClass}
+                loading={submitting}
+              >
                 Create doctor
               </Button>
             </DialogFooter>

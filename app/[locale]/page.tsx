@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Activity, Shield, Stethoscope } from "lucide-react";
-import { normalButtonClass } from "@/lib/control-styles";
+import { blueButtonClass, greenButtonClass } from "@/lib/control-styles";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -12,6 +12,7 @@ export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("HomePage");
+  const authT = await getTranslations("Auth"); // Load Auth translation keys if available
   const user = await getSession();
   const featureItems = [
     {
@@ -59,24 +60,36 @@ export default async function HomePage({ params }: Props) {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             {user ? (
-                <Button
-                  asChild
-                  variant="gradient"
-                  className="h-auto cursor-pointer rounded-full px-4 py-2 text-base font-medium"
-                >
-                  <Link href="/dashboard">{t("getStarted")}</Link>
-                </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className={`${blueButtonClass} h-auto cursor-pointer px-5 py-2.5 text-base font-medium`}
+              >
+                <Link href="/dashboard">{t("getStarted")}</Link>
+              </Button>
             ) : (
               <>
+                {/* Left Action: Login (Blue Accent Style) */}
                 <Button
                   asChild
-                  variant="gradient"
-                  className="h-auto cursor-pointer rounded-full px-4 py-2 text-base font-medium"
+                  size="lg"
+                  variant="outline"
+                  className={blueButtonClass}
                 >
-                  <Link href="/auth/register">{t("getStarted")}</Link>
+                  <Link href="/auth/login">{authT("login") ?? "Login"}</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className={normalButtonClass}>
-                  <Link href="/auth/login">{t("learnMore")}</Link>
+
+                {/* Right Action: Sign Up (Green Accent Style) */}
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className={greenButtonClass}
+                >
+                  <Link href="/auth/register">
+                    {authT("Learn more") ?? "Sign up"}
+                  </Link>
                 </Button>
               </>
             )}

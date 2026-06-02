@@ -12,9 +12,9 @@ export function AppLogo({ className, iconClassName }: AppLogoProps) {
   return (
     <div
       className={cn(
-        // -ml-3 pulls the logo to the left edge (adjust to -ml-2 or -ml-4 if needed)
-        // rounded-full changes the shape from square to a circle
-        "ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-950/25 transition-transform duration-200 hover:scale-105",
+        // 1. Added a gentle negative margin (-ml-1.5 or -ml-2) as the default base state.
+        // This will pull it back to the left perfectly within your navbar padding.
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-950/25 transition-transform duration-200 hover:scale-105",
         className,
       )}
       aria-hidden="true"

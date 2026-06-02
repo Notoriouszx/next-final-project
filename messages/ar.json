@@ -1,9 +1,30 @@
 {
+  "Language": {
+    "switch": "تغيير اللغة",
+    "english": "الإنجليزية",
+    "french": "الفرنسية",
+    "arabic": "العربية"
+  },
   "HomePage": {
-    "title": "مرحبًا بك في الرعاية الصحية الإلكترونية",
+    "badge": "بنية تراعي HIPAA · Better Auth · Prisma",
+    "title": "مرحباً بك في E-Healthcare",
     "subtitle": "نظام حديث لإدارة الرعاية الصحية",
     "getStarted": "ابدأ الآن",
-    "learnMore": "اعرف المزيد"
+    "learnMore": "اعرف المزيد",
+    "features": {
+      "patients": {
+        "title": "المرضى",
+        "text": "بوابة ذاتية الخدمة وسجلات طبية ومشاركة وصول دقيقة."
+      },
+      "careTeams": {
+        "title": "فرق الرعاية",
+        "text": "أطباء وممرضون بجلسات محمية بالتحقق البيومتري وسجلات تدقيق."
+      },
+      "security": {
+        "title": "الأمان",
+        "text": "مصادقة ثنائية وروابط سحرية ورموز OTP بالبريد الإلكتروني وواجهات تحقق بيومترية خارجية."
+      }
+    }
   },
   "Navbar": {
     "profile": "الملف الشخصي",
@@ -14,40 +35,141 @@
     "signup": "إنشاء حساب",
     "register": "إنشاء حساب"
   },
+  "Navigation": {
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "doctors": "الأطباء",
+    "nurses": "الممرضون",
+    "patients": "المرضى",
+    "records": "السجلات",
+    "analytics": "التحليلات",
+    "auditLogs": "سجلات التدقيق",
+    "settings": "الإعدادات",
+    "myPatients": "مرضاي",
+    "accessRequests": "طلبات الوصول",
+    "assignedPatients": "المرضى المعينون",
+    "myRecords": "سجلاتي",
+    "upload": "رفع",
+    "grantAccess": "منح الوصول",
+    "security": "الأمان",
+    "profile": "الملف الشخصي",
+    "secureHealthPortal": "بوابة صحية آمنة"
+  },
   "Dashboard": {
-    "welcome": "مرحبًا بك",
+    "welcome": "مرحباً بعودتك",
     "overview": "نظرة عامة",
-    "stats": "الإحصائيات",
+    "stats": "الإحصاءات",
     "recentActivity": "النشاط الأخير"
   },
   "Auth": {
     "login": "تسجيل الدخول",
+    "loginDescription": "سجّل الدخول بكلمة مرور أو رابط سحري أو رمز OTP عبر البريد",
     "register": "إنشاء حساب",
+    "registerDescription": "أنشئ حساب مريض. حسابات الموظفين يصدرها المسؤول.",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
+    "magicLink": "رابط سحري",
+    "sendMagicLink": "إرسال الرابط السحري",
+    "magicLinkSent": "تحقق من بريدك للحصول على رابط تسجيل الدخول. يمكنك إغلاق هذه الصفحة.",
+    "otp": "كلمة مرور لمرة واحدة",
+    "otpShort": "OTP",
+    "sendOtp": "إرسال OTP",
     "name": "الاسم الكامل",
     "confirmPassword": "تأكيد كلمة المرور",
-    "forgotPassword": "نسيت كلمة المرور؟",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
     "alreadyHaveAccount": "لديك حساب بالفعل؟",
     "dontHaveAccount": "ليس لديك حساب؟",
-    "biometricVerification": "مطلوب التحقق البيومتري",
-    "verifyFace": "التحقق من الوجه",
-    "verifyIris": "التحقق من القزحية",
-    "verifyFingerprint": "التحقق من البصمة",
-    "otp": "كلمة مرور لمرة واحدة",
+    "biometricVerification": "التحقق البيومتري مطلوب",
+    "verifyFace": "تحقق من الوجه",
+    "verifyIris": "تحقق من القزحية",
+    "verifyFingerprint": "تحقق من البصمة",
     "enterOTP": "أدخل رمز OTP",
-    "verifyOTP": "تحقق من OTP"
+    "verifyOTP": "تحقق من OTP",
+    "twoFactorTitle": "المصادقة الثنائية",
+    "twoFactorDescription": "أدخل الرمز من تطبيق المصادقة لإكمال تسجيل الدخول.",
+    "verify": "تحقق",
+    "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+    "errorOccurred": "حدث خطأ"
   },
   "Admin": {
     "dashboard": "لوحة تحكم المسؤول",
     "totalUsers": "إجمالي المستخدمين",
     "activeDoctors": "الأطباء النشطون",
-    "recordsUploaded": "السجلات المحملة"
+    "recordsUploaded": "السجلات المرفوعة",
+    "newPatients": "مرضى جدد",
+    "userGrowth": "نمو المستخدمين",
+    "recordsPerDay": "السجلات يومياً",
+    "recentActivity": "النشاط الأخير",
+    "systemAlerts": "تنبيهات النظام",
+    "createDoctor": "إنشاء طبيب",
+    "createNurse": "إنشاء ممرض",
+    "manageUsers": "إدارة المستخدمين",
+    "usersManagement": "إدارة المستخدمين",
+    "medicalRecords": "السجلات الطبية",
+    "auditLogs": "سجلات التدقيق"
+  },
+  "Doctor": {
+    "dashboard": "لوحة تحكم الطبيب",
+    "myPatients": "مرضاي",
+    "accessRequests": "طلبات الوصول",
+    "recentRecords": "السجلات المعروضة مؤخراً",
+    "pendingRequests": "طلبات الوصول المعلقة",
+    "approveAccess": "الموافقة على الوصول",
+    "viewRecord": "عرض السجل"
+  },
+  "Nurse": {
+    "dashboard": "لوحة تحكم الممرض",
+    "assignedPatients": "المرضى المعينون",
+    "viewRecords": "عرض السجلات",
+    "workspace": "مساحة الممرض"
+  },
+  "Patient": {
+    "dashboard": "لوحة تحكم المريض",
+    "myRecords": "سجلاتي",
+    "uploadRecord": "رفع سجل طبي",
+    "grantAccess": "منح الوصول",
+    "recordHistory": "سجل السجلات",
+    "accessManagement": "إدارة الوصول",
+    "generateOTP": "إنشاء OTP",
+    "generateMagicLink": "إنشاء رابط سحري",
+    "activeGrants": "صلاحيات الوصول النشطة",
+    "revokeAccess": "إلغاء الوصول",
+    "securitySettings": "إعدادات الأمان",
+    "enable2FA": "تفعيل المصادقة الثنائية",
+    "biometricAuth": "المصادقة البيومترية"
+  },
+  "Records": {
+    "title": "السجلات الطبية",
+    "fileName": "اسم الملف",
+    "fileType": "النوع",
+    "uploadDate": "تاريخ الرفع",
+    "description": "الوصف",
+    "download": "تنزيل",
+    "view": "عرض",
+    "delete": "حذف",
+    "noRecords": "لا توجد سجلات"
   },
   "Common": {
     "save": "حفظ",
     "cancel": "إلغاء",
     "delete": "حذف",
-    "loading": "جاري التحميل..."
+    "edit": "تعديل",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "import": "استيراد",
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ",
+    "success": "نجاح",
+    "confirm": "تأكيد",
+    "close": "إغلاق",
+    "actions": "الإجراءات",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "status": "الحالة",
+    "createdAt": "تاريخ الإنشاء",
+    "active": "نشط",
+    "inactive": "غير نشط"
   }
 }

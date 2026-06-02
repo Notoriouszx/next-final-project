@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { authClient } from "@/lib/auth-client";
 import { loginPasswordSchema } from "@/lib/forms-schemas";
 import { blueButtonClass, greenButtonClass, normalButtonClass } from "@/lib/control-styles";
@@ -138,13 +138,11 @@ export default function LoginPage() {
       <Card className="surface-elevated w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-              <Activity className="h-8 w-8 text-primary" />
-            </div>
+            <AppLogo className="h-12 w-12 rounded-lg" iconClassName="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold">{t("login")}</CardTitle>
           <CardDescription>
-            Sign in with password, magic link, or email OTP
+            {t("loginDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,19 +152,19 @@ export default function LoginPage() {
                 value="password"
                 className={`${normalButtonClass} h-10 rounded-lg border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10`}
               >
-                Password
+                {t("password")}
               </TabsTrigger>
               <TabsTrigger
                 value="magic"
                 className={`${normalButtonClass} h-10 rounded-lg border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10`}
               >
-                Magic link
+                {t("magicLink")}
               </TabsTrigger>
               <TabsTrigger
                 value="otp"
                 className={`${normalButtonClass} h-10 rounded-lg border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10`}
               >
-                OTP
+                {t("otpShort")}
               </TabsTrigger>
             </TabsList>
 
@@ -219,7 +217,7 @@ export default function LoginPage() {
                 )}
                 {magicSent ? (
                   <p className="text-sm text-muted-foreground">
-                    Check your inbox for a sign-in link. You can close this page.
+                    {t("magicLinkSent")}
                   </p>
                 ) : (
                   <>
@@ -239,7 +237,7 @@ export default function LoginPage() {
                       variant="outline"
                       disabled={loading}
                     >
-                      {loading ? "…" : "Send magic link"}
+                      {loading ? "..." : t("sendMagicLink")}
                     </Button>
                   </>
                 )}
@@ -270,7 +268,7 @@ export default function LoginPage() {
                     className={`w-full ${blueButtonClass}`}
                     disabled={loading}
                   >
-                    {loading ? "…" : "Send OTP"}
+                    {loading ? "..." : t("sendOtp")}
                   </Button>
                 </form>
                 {otpSent && (
@@ -292,7 +290,7 @@ export default function LoginPage() {
                       variant="outline"
                       disabled={loading}
                     >
-                      {loading ? "…" : t("verifyOTP")}
+                      {loading ? "..." : t("verifyOTP")}
                     </Button>
                   </form>
                 )}

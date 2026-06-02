@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Activity, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
+import { AppLogo } from "./app-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,19 +50,12 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-card/85 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-card/75">
-      <div className="container flex h-16 items-center justify-between gap-4">
+      <div className="flex h-16 w-full items-center justify-between gap-4 px-0 pe-2 sm:pe-4">
         <Link
           href={user ? "/dashboard" : "/"}
           className="flex min-w-0 items-center gap-2.5 transition-opacity hover:opacity-90"
         >
-          <div
-            className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md",
-              role ? ROLE_ACCENT[role] : "from-primary to-info"
-            )}
-          >
-            <Activity className="h-5 w-5" />
-          </div>
+          <AppLogo className="h-9 w-9 rounded-md" iconClassName="h-5 w-5" />
           <span className="truncate text-lg font-bold tracking-tight sm:text-xl">
             <span className="text-red-500">Medi</span>
             <span className="text-foreground">Care</span>

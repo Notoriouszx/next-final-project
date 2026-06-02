@@ -1,9 +1,30 @@
 {
+  "Language": {
+    "switch": "Changer de langue",
+    "english": "Anglais",
+    "french": "Français",
+    "arabic": "Arabe"
+  },
   "HomePage": {
+    "badge": "Architecture pensée pour HIPAA · Better Auth · Prisma",
     "title": "Bienvenue sur E-Healthcare",
     "subtitle": "Système moderne de gestion de la santé",
     "getStarted": "Commencer",
-    "learnMore": "En savoir plus"
+    "learnMore": "En savoir plus",
+    "features": {
+      "patients": {
+        "title": "Patients",
+        "text": "Portail en libre-service, dossiers médicaux et partage d'accès granulaire."
+      },
+      "careTeams": {
+        "title": "Équipes de soins",
+        "text": "Médecins et infirmiers avec sessions biométriques et journaux d'audit."
+      },
+      "security": {
+        "title": "Sécurité",
+        "text": "2FA, liens magiques, OTP par e-mail et API externes de vérification biométrique."
+      }
+    }
   },
   "Navbar": {
     "profile": "Profil",
@@ -14,40 +35,141 @@
     "signup": "S'inscrire",
     "register": "S'inscrire"
   },
+  "Navigation": {
+    "dashboard": "Tableau de bord",
+    "users": "Utilisateurs",
+    "doctors": "Médecins",
+    "nurses": "Infirmiers",
+    "patients": "Patients",
+    "records": "Dossiers",
+    "analytics": "Analytique",
+    "auditLogs": "Journaux d'audit",
+    "settings": "Paramètres",
+    "myPatients": "Mes patients",
+    "accessRequests": "Demandes d'accès",
+    "assignedPatients": "Patients assignés",
+    "myRecords": "Mes dossiers",
+    "upload": "Téléverser",
+    "grantAccess": "Accorder l'accès",
+    "security": "Sécurité",
+    "profile": "Profil",
+    "secureHealthPortal": "Portail santé sécurisé"
+  },
   "Dashboard": {
-    "welcome": "Bienvenue",
+    "welcome": "Bon retour",
     "overview": "Aperçu",
     "stats": "Statistiques",
     "recentActivity": "Activité récente"
   },
   "Auth": {
     "login": "Connexion",
+    "loginDescription": "Connectez-vous avec un mot de passe, un lien magique ou un OTP par e-mail",
     "register": "S'inscrire",
-    "email": "Email",
+    "registerDescription": "Créez un compte patient. Les comptes du personnel sont créés par votre administrateur.",
+    "email": "E-mail",
     "password": "Mot de passe",
+    "magicLink": "Lien magique",
+    "sendMagicLink": "Envoyer le lien magique",
+    "magicLinkSent": "Consultez votre boîte de réception pour le lien de connexion. Vous pouvez fermer cette page.",
+    "otp": "Mot de passe à usage unique",
+    "otpShort": "OTP",
+    "sendOtp": "Envoyer l'OTP",
     "name": "Nom complet",
     "confirmPassword": "Confirmer le mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
-    "alreadyHaveAccount": "Déjà un compte ?",
-    "dontHaveAccount": "Pas encore de compte ?",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
     "biometricVerification": "Vérification biométrique requise",
     "verifyFace": "Vérifier le visage",
     "verifyIris": "Vérifier l'iris",
     "verifyFingerprint": "Vérifier l'empreinte",
-    "otp": "Mot de passe à usage unique",
-    "enterOTP": "Entrer le code OTP",
-    "verifyOTP": "Vérifier l'OTP"
+    "enterOTP": "Saisir le code OTP",
+    "verifyOTP": "Vérifier l'OTP",
+    "twoFactorTitle": "Authentification à deux facteurs",
+    "twoFactorDescription": "Saisissez le code de votre application d'authentification pour terminer la connexion.",
+    "verify": "Vérifier",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+    "errorOccurred": "Une erreur est survenue"
   },
   "Admin": {
-    "dashboard": "Tableau de bord Admin",
-    "totalUsers": "Total Utilisateurs",
-    "activeDoctors": "Médecins Actifs",
-    "recordsUploaded": "Dossiers Téléchargés"
+    "dashboard": "Tableau de bord administrateur",
+    "totalUsers": "Total des utilisateurs",
+    "activeDoctors": "Médecins actifs",
+    "recordsUploaded": "Dossiers téléversés",
+    "newPatients": "Nouveaux patients",
+    "userGrowth": "Croissance des utilisateurs",
+    "recordsPerDay": "Dossiers par jour",
+    "recentActivity": "Activité récente",
+    "systemAlerts": "Alertes système",
+    "createDoctor": "Créer un médecin",
+    "createNurse": "Créer un infirmier",
+    "manageUsers": "Gérer les utilisateurs",
+    "usersManagement": "Gestion des utilisateurs",
+    "medicalRecords": "Dossiers médicaux",
+    "auditLogs": "Journaux d'audit"
+  },
+  "Doctor": {
+    "dashboard": "Tableau de bord médecin",
+    "myPatients": "Mes patients",
+    "accessRequests": "Demandes d'accès",
+    "recentRecords": "Dossiers récemment consultés",
+    "pendingRequests": "Demandes d'accès en attente",
+    "approveAccess": "Approuver l'accès",
+    "viewRecord": "Voir le dossier"
+  },
+  "Nurse": {
+    "dashboard": "Tableau de bord infirmier",
+    "assignedPatients": "Patients assignés",
+    "viewRecords": "Voir les dossiers",
+    "workspace": "Espace infirmier"
+  },
+  "Patient": {
+    "dashboard": "Tableau de bord patient",
+    "myRecords": "Mes dossiers",
+    "uploadRecord": "Téléverser un dossier médical",
+    "grantAccess": "Accorder l'accès",
+    "recordHistory": "Historique des dossiers",
+    "accessManagement": "Gestion des accès",
+    "generateOTP": "Générer un OTP",
+    "generateMagicLink": "Générer un lien magique",
+    "activeGrants": "Accès actifs",
+    "revokeAccess": "Révoquer l'accès",
+    "securitySettings": "Paramètres de sécurité",
+    "enable2FA": "Activer l'authentification à deux facteurs",
+    "biometricAuth": "Authentification biométrique"
+  },
+  "Records": {
+    "title": "Dossiers médicaux",
+    "fileName": "Nom du fichier",
+    "fileType": "Type",
+    "uploadDate": "Date de téléversement",
+    "description": "Description",
+    "download": "Télécharger",
+    "view": "Voir",
+    "delete": "Supprimer",
+    "noRecords": "Aucun dossier trouvé"
   },
   "Common": {
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer",
-    "loading": "Chargement..."
+    "edit": "Modifier",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "success": "Succès",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "actions": "Actions",
+    "name": "Nom",
+    "email": "E-mail",
+    "role": "Rôle",
+    "status": "Statut",
+    "createdAt": "Créé le",
+    "active": "Actif",
+    "inactive": "Inactif"
   }
 }

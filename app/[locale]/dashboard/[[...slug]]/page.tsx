@@ -1,5 +1,6 @@
 import { redirect } from "@/i18n/navigation";
 import prisma from "@/lib/prisma";
+import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/session";
 import type { User } from "@/lib/types";
 import { canAccessRoute } from "@/lib/rbac";
@@ -44,6 +45,30 @@ const TITLES: Record<string, string> = {
   profile: "Profile",
 };
 
+const TITLE_KEYS: Record<string, string> = {
+  users: "usersManagement",
+  doctors: "doctors",
+  nurses: "nurses",
+  patients: "patients",
+  records: "medicalRecords",
+  analytics: "analytics",
+  "audit-logs": "auditLogs",
+  settings: "settings",
+  "my-patients": "myPatients",
+  "access-requests": "accessRequests",
+  "assigned-patients": "assignedPatients",
+  "my-records": "myRecords",
+  upload: "uploadRecord",
+  "grant-access": "grantAccess",
+  security: "securitySettings",
+  profile: "profile",
+};
+
+function getPageTitle(path: string, t: Awaited<ReturnType<typeof getTranslations>>) {
+  const key = TITLE_KEYS[path];
+  return key ? t(key) : (TITLES[path] ?? path.replace(/-/g, " "));
+}
+
 type Props = {
   params: Promise<{ locale: string; slug?: string[] }>;
   searchParams: Promise<{ period?: string }>;
@@ -52,6 +77,7 @@ type Props = {
 export default async function DashboardSectionPage({ params, searchParams }: Props) {
   const { locale, slug } = await params;
   const query = await searchParams;
+  const t = await getTranslations("PageTitles");
   const sessionUser = await getSession();
 
   if (sessionUser === null) {
@@ -99,7 +125,7 @@ export default async function DashboardSectionPage({ params, searchParams }: Pro
     if (path === "") {
       return <AdminDashboard user={user} periodDays={periodDays} />;
     }
-    const title = TITLES[path] ?? path.replace(/-/g, " ");
+    const title = getPageTitle(path, t);
     return <DashboardPlaceholder title={title} />;
   }
 
@@ -111,7 +137,7 @@ export default async function DashboardSectionPage({ params, searchParams }: Pro
     if (path === "upload") return <PatientUploadPage />;
     if (path === "grant-access") return <PatientGrantAccessPage />;
     if (path === "security") return <PatientSecurityPage user={user} />;
-    const title = TITLES[path] ?? path.replace(/-/g, " ");
+    const title = getPageTitle(path, t);
     return <DashboardPlaceholder title={title} />;
   }
 
@@ -121,15 +147,15 @@ export default async function DashboardSectionPage({ params, searchParams }: Pro
     if (path === "access-requests") return <DoctorAccessRequestsPage user={user} />;
     if (path === "records") return <DoctorRecordsPage user={user} />;
     if (path === "profile") return <StaffProfilePage user={user} />;
-    const title = TITLES[path] ?? path.replace(/-/g, " ");
+    const title = getPageTitle(path, t);
     return <DashboardPlaceholder title={title} />;
   }
 
   if (user.role === "nurse") {
     return (
       <NurseEmptyState
-        title={path ? (TITLES[path] ?? path.replace(/-/g, " ")) : "Nurse workspace"}
-        description="Nurse tools are coming soon. Your account is active — we'll enable patient assignments and records here shortly."
+        title={path ? getPageTitle(path, t) : t("nurseWorkspace")}
+        description={t("nurseWorkspaceDescription")}
       />
     );
   }

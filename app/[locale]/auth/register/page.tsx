@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Activity } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
@@ -39,7 +39,7 @@ export default function RegisterPage() {
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwordsDoNotMatch"));
       setLoading(false);
       return;
     }
@@ -57,7 +57,7 @@ export default function RegisterPage() {
       }
       router.push("/dashboard");
     } catch {
-      setError("An error occurred");
+      setError(t("errorOccurred"));
     } finally {
       setLoading(false);
     }
@@ -68,13 +68,11 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md border-primary/10 shadow-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-              <Activity className="h-8 w-8 text-primary" />
-            </div>
+            <AppLogo className="h-12 w-12 rounded-lg" iconClassName="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold">{t("register")}</CardTitle>
           <CardDescription>
-            Create a patient account. Staff accounts are issued by your administrator.
+            {t("registerDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,7 +130,7 @@ export default function RegisterPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "…" : t("register")}
+              {loading ? "..." : t("register")}
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">

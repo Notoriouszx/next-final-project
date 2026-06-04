@@ -3,11 +3,13 @@
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const t = useTranslations("Theme");
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -27,9 +29,12 @@ export function ThemeToggle() {
       )}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-500 dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
-      <span className="sr-only">Toggle theme</span>
+      {isDark ? (
+        <Moon className="h-5 w-5 transition-transform duration-300" />
+      ) : (
+        <Sun className="h-5 w-5 transition-transform duration-300" />
+      )}
+      <span className="sr-only">{t("toggle")}</span>
     </Button>
   );
 }

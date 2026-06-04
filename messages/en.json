@@ -1,9 +1,30 @@
 {
+  "Language": {
+    "switch": "Switch language",
+    "english": "English",
+    "french": "French",
+    "arabic": "Arabic"
+  },
   "HomePage": {
+    "badge": "HIPAA-minded architecture · Better Auth · Prisma",
     "title": "Welcome to E-Healthcare",
     "subtitle": "Modern healthcare management system",
     "getStarted": "Get Started",
-    "learnMore": "Learn More"
+    "learnMore": "Learn More",
+    "features": {
+      "patients": {
+        "title": "Patients",
+        "text": "Self-service portal, medical records, and granular access sharing."
+      },
+      "careTeams": {
+        "title": "Care teams",
+        "text": "Doctors and nurses with biometric-gated sessions and audit trails."
+      },
+      "security": {
+        "title": "Security",
+        "text": "2FA, magic links, email OTP, and external biometric verification APIs."
+      }
+    }
   },
   "Navbar": {
     "profile": "Profile",
@@ -14,6 +35,26 @@
     "signup": "Sign Up",
     "register": "Sign Up"
   },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "doctors": "Doctors",
+    "nurses": "Nurses",
+    "patients": "Patients",
+    "records": "Records",
+    "analytics": "Analytics",
+    "auditLogs": "Audit logs",
+    "settings": "Settings",
+    "myPatients": "My patients",
+    "accessRequests": "Access requests",
+    "assignedPatients": "Assigned patients",
+    "myRecords": "My records",
+    "upload": "Upload",
+    "grantAccess": "Grant access",
+    "security": "Security",
+    "profile": "Profile",
+    "secureHealthPortal": "Secure health portal"
+  },
   "Dashboard": {
     "welcome": "Welcome back",
     "overview": "Overview",
@@ -22,9 +63,17 @@
   },
   "Auth": {
     "login": "Login",
+    "loginDescription": "Sign in with password, magic link, or email OTP",
     "register": "Register",
+    "registerDescription": "Create a patient account. Staff accounts are issued by your administrator.",
     "email": "Email",
     "password": "Password",
+    "magicLink": "Magic link",
+    "sendMagicLink": "Send magic link",
+    "magicLinkSent": "Check your inbox for a sign-in link. You can close this page.",
+    "otp": "One-Time Password",
+    "otpShort": "OTP",
+    "sendOtp": "Send OTP",
     "name": "Full Name",
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot Password?",
@@ -34,9 +83,13 @@
     "verifyFace": "Verify Face",
     "verifyIris": "Verify Iris",
     "verifyFingerprint": "Verify Fingerprint",
-    "otp": "One-Time Password",
     "enterOTP": "Enter OTP Code",
-    "verifyOTP": "Verify OTP"
+    "verifyOTP": "Verify OTP",
+    "twoFactorTitle": "Two-factor authentication",
+    "twoFactorDescription": "Enter the code from your authenticator app to finish signing in.",
+    "verify": "Verify",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "errorOccurred": "An error occurred"
   },
   "Admin": {
     "dashboard": "Admin Dashboard",
@@ -50,7 +103,10 @@
     "systemAlerts": "System Alerts",
     "createDoctor": "Create Doctor",
     "createNurse": "Create Nurse",
-    "manageUsers": "Manage Users"
+    "manageUsers": "Manage Users",
+    "usersManagement": "Users Management",
+    "medicalRecords": "Medical records",
+    "auditLogs": "Audit logs"
   },
   "Doctor": {
     "dashboard": "Doctor Dashboard",
@@ -64,7 +120,8 @@
   "Nurse": {
     "dashboard": "Nurse Dashboard",
     "assignedPatients": "Assigned Patients",
-    "viewRecords": "View Records"
+    "viewRecords": "View Records",
+    "workspace": "Nurse workspace"
   },
   "Patient": {
     "dashboard": "Patient Dashboard",
@@ -105,6 +162,14 @@
     "error": "An error occurred",
     "success": "Success",
     "confirm": "Confirm",
-    "close": "Close"
+    "close": "Close",
+    "actions": "Actions",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "createdAt": "Created At",
+    "active": "Active",
+    "inactive": "Inactive"
   }
 }

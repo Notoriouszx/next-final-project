@@ -54,9 +54,9 @@ export default function TwoFactorPage() {
               <Shield className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Two-factor authentication</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("twoFactorTitle")}</CardTitle>
           <CardDescription>
-            Enter the code from your authenticator app to finish signing in.
+            {t("twoFactorDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -79,7 +79,7 @@ export default function TwoFactorPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "…" : "Verify"}
+              {loading ? "..." : t("verify")}
             </Button>
           </form>
         </CardContent>

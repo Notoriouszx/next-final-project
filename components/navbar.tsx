@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Activity, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
+import { AppLogo } from "./app-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,19 +50,16 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-card/85 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-card/75">
-      <div className="container flex h-16 items-center justify-between gap-4">
+      <div className="flex h-16 w-full items-center justify-between gap-4 ps-4 pe-2 sm:ps-6">
         <Link
           href={user ? "/dashboard" : "/"}
           className="flex min-w-0 items-center gap-2.5 transition-opacity hover:opacity-90"
         >
-          <div
-            className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md",
-              role ? ROLE_ACCENT[role] : "from-primary to-info"
-            )}
-          >
-            <Activity className="h-5 w-5" />
-          </div>
+          {/* -ms-2 explicitly counteracts header padding to align the logo left edge correctly */}
+          <AppLogo
+            className="-ms-4 h-9 w-9 rounded-md"
+            iconClassName="h-5 w-5"
+          />
           <span className="truncate text-lg font-bold tracking-tight sm:text-xl">
             <span className="text-red-500">Medi</span>
             <span className="text-foreground">Care</span>
@@ -75,12 +73,15 @@ export function Navbar({ user }: NavbarProps) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 gap-2 rounded-full ps-1 pe-2">
+                <Button
+                  variant="ghost"
+                  className="relative h-10 gap-2 rounded-full ps-1 pe-2"
+                >
                   <Avatar className="h-8 w-8 border-2 border-primary/20">
                     <AvatarFallback
                       className={cn(
                         "bg-gradient-to-br text-xs font-semibold text-white",
-                        role ? ROLE_ACCENT[role] : "from-primary to-info"
+                        role ? ROLE_ACCENT[role] : "from-primary to-info",
                       )}
                     >
                       {user.name.charAt(0).toUpperCase()}
@@ -94,10 +95,17 @@ export function Navbar({ user }: NavbarProps) {
               <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuLabel>
                   <div className="flex flex-col gap-1.5">
-                    <p className="text-sm font-semibold leading-none">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p className="text-sm font-semibold leading-none">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
                     {role ? (
-                      <Badge variant={roleBadgeVariant(role)} className="w-fit capitalize">
+                      <Badge
+                        variant={roleBadgeVariant(role)}
+                        className="w-fit capitalize"
+                      >
                         {role}
                       </Badge>
                     ) : null}
@@ -128,10 +136,20 @@ export function Navbar({ user }: NavbarProps) {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="outline" asChild size="sm" className={blueButtonClass}>
+              <Button
+                variant="outline"
+                asChild
+                size="sm"
+                className={blueButtonClass}
+              >
                 <Link href="/auth/login">{t("login") ?? "Login"}</Link>
               </Button>
-              <Button variant="outline" asChild size="sm" className={greenButtonClass}>
+              <Button
+                variant="outline"
+                asChild
+                size="sm"
+                className={greenButtonClass}
+              >
                 <Link href="/auth/register">{t("register") ?? "Sign up"}</Link>
               </Button>
             </div>

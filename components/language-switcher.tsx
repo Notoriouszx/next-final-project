@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Languages } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import {
   DropdownMenu,
@@ -13,13 +13,14 @@ import {
 import { Button } from "@/components/ui/button";
 
 const languages = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "fr", name: "Français", flag: "🇫🇷" },
-  { code: "ar", name: "العربية", flag: "🇸🇦" },
+  { code: "en", nameKey: "english" },
+  { code: "fr", nameKey: "french" },
+  { code: "ar", nameKey: "arabic" },
 ];
 
 export function LanguageSwitcher() {
   const locale = useLocale();
+  const t = useTranslations("Language");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -32,7 +33,7 @@ export function LanguageSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <Languages className="h-5 w-5" />
-          <span className="sr-only">Switch language</span>
+          <span className="sr-only">{t("switch")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -42,9 +43,8 @@ export function LanguageSwitcher() {
             onClick={() => handleLanguageChange(language.code)}
             className="cursor-pointer"
           >
-            <span className="me-2">{language.flag}</span>
-            {language.name}
-            {locale === language.code && " ✓"}
+            {t(language.nameKey)}
+            {locale === language.code && <span className="ms-2">✓</span>}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

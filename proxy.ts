@@ -1,24 +1,16 @@
-// File: proxy.ts (Place in your project root)
-import createMiddleware from "next-intl/middleware";
+// proxy.ts
+export const runtime = "nodejs"; // MUST be Node.js, not Edge
+
 import { NextResponse, type NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
-// --- Part 1: Configure CORS for API routes ---
+// Allowed origins (your Flutter GitHub Pages app)
+const ALLOWED_ORIGIN = "https://notoriouszx.github.io";
 
-// Define allowed origins for your API. Replace with your actual app's URL in production.
-// Using '*' is fine for development on localhost.
-const ALLOWED_ORIGINS = [
-  "*",
-  "http://localhost:52497",
-  "https://project-9g6if.vercel.app",
-];
-
-// Helper function to set CORS headers on a response
-function setCorsHeaders(response: NextResponse, origin: string | null) {
-  let allowOrigin = "*";
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    allowOrigin = origin;
-  }
+// Helper to add CORS headers to any response
+function addCorsHeaders(response: NextResponse, origin: string | null) {
+  const allowOrigin = origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "*";
   response.headers.set("Access-Control-Allow-Origin", allowOrigin);
   response.headers.set(
     "Access-Control-Allow-Methods",
@@ -32,44 +24,35 @@ function setCorsHeaders(response: NextResponse, origin: string | null) {
   return response;
 }
 
-// Helper to handle an OPTIONS (preflight) request directly
-function handleOptionsRequest(request: NextRequest) {
+// Handle preflight OPTIONS requests
+function handleOptions(request: NextRequest) {
   const origin = request.headers.get("origin");
-  const preflightResponse = new NextResponse(null, { status: 204 });
-  return setCorsHeaders(preflightResponse, origin);
+  const response = new NextResponse(null, { status: 204 });
+  return addCorsHeaders(response, origin);
 }
 
-// --- Part 2: The main request handler ---
-
-// Create the next-intl handler for internationalized routes
-const handleI18n = createMiddleware(routing);
-
+// The main proxy function
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // 1. Handle API Preflight (OPTIONS) Requests
-  if (request.method === "OPTIONS") {
-    if (pathname.startsWith("/api/")) {
-      return handleOptionsRequest(request);
-    }
-    return new NextResponse(null, { status: 204 });
+  // 1. Handle API preflight (OPTIONS)
+  if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    return handleOptions(request);
   }
 
-  // 2. Handle API Requests (POST, GET, PUT, etc.)
+  // 2. Handle actual API requests (POST, GET, etc.)
   if (pathname.startsWith("/api/")) {
-    // Let the request pass through to your existing API routes...
-    const response = NextResponse.next();
-    // ...but add the required CORS headers to the response
+    const response = NextResponse.next(); // let the actual route handler run
     const origin = request.headers.get("origin");
-    return setCorsHeaders(response, origin);
+    return addCorsHeaders(response, origin);
   }
 
-  // 3. Handle all other requests (Your Website Pages) with next-intl
-  // This ensures your i18n routing works correctly for all locales and pages.
-  return handleI18n(request);
+  // 3. All other routes – use next-intl for internationalisation
+  const i18nHandler = createMiddleware(routing);
+  return i18nHandler(request);
 }
 
-// --- Part 3: Configure the proxy to run on every route except static assets ---
+// Match all routes except static assets
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

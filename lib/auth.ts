@@ -12,7 +12,7 @@ const secret =
 // Wildcards do NOT work with withCredentials=true — list each origin explicitly.
 const trustedOrigins = [
   // Flutter web (GitHub Pages)
-  "https://notoriouszx.github.io",
+  "https://notoriouszx.github.io/Mobile-app/",
   // Local development
   "http://localhost:3000",
   "http://localhost:5000",

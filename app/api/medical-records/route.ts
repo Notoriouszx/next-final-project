@@ -14,16 +14,13 @@ const metaSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
-// Helper: remove cookie header from request headers
-function removeCookieHeader(headers: Headers): Headers {
-  const cleaned = new Headers(headers);
-  cleaned.delete("cookie");
-  return cleaned;
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/medical-records
+// Pass request.headers directly — Better Auth reads its own session cookie.
+// DO NOT strip the cookie header. That is what caused the 401.
+// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanedHeaders = removeCookieHeader(request.headers);
-  const session = await auth.api.getSession({ headers: cleanedHeaders });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -56,9 +53,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/medical-records
+// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanedHeaders = removeCookieHeader(request.headers);
-  const session = await auth.api.getSession({ headers: cleanedHeaders });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -90,8 +89,7 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
-      const max = 15 * 1024 * 1024;
-      if (file.size > max) {
+      if (file.size > 15 * 1024 * 1024) {
         return NextResponse.json(
           { error: "File too large (max 15MB)" },
           { status: 400 },
@@ -140,7 +138,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ items: created });
   } catch (e) {
     console.error(e);
-    const message = e instanceof Error ? e.message : "Upload failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Upload failed" },
+      { status: 500 },
+    );
   }
 }

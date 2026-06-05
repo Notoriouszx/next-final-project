@@ -13,15 +13,13 @@ const createSchema = z.object({
   expiresInHours: z.number().min(1).max(720).default(72),
 });
 
-function removeCookieHeader(headers: Headers): Headers {
-  const cleaned = new Headers(headers);
-  cleaned.delete("cookie");
-  return cleaned;
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/access-grants
+// Pass request.headers directly — Better Auth reads its own session cookie.
+// DO NOT strip the cookie header. That is what caused the 401.
+// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanedHeaders = removeCookieHeader(request.headers);
-  const session = await auth.api.getSession({ headers: cleanedHeaders });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -70,9 +68,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/access-grants
+// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanedHeaders = removeCookieHeader(request.headers);
-  const session = await auth.api.getSession({ headers: cleanedHeaders });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

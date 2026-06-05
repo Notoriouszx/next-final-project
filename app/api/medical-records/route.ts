@@ -15,12 +15,25 @@ const metaSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  console.log("[API] GET /api/medical-records");
   const authHeader = request.headers.get("authorization");
+  console.log(
+    "[API] Auth header:",
+    authHeader ? authHeader.substring(0, 30) + "..." : "null",
+  );
   const user = await verifyTokenAndGetUser(authHeader);
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (user.role !== "patient")
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json(
+      { error: "Unauthorized", debug: "User verification failed" },
+      { status: 401 },
+    );
+  }
+  if (user.role !== "patient") {
+    return NextResponse.json(
+      { error: "Forbidden", debug: "Role is not patient" },
+      { status: 403 },
+    );
+  }
 
   try {
     const records = await prisma.medicalRecord.findMany({
@@ -38,6 +51,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json({ items: records });
   } catch (e) {
+    console.error(e);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -48,23 +62,32 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const user = await verifyTokenAndGetUser(authHeader);
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (user.role !== "patient")
+  if (!user) {
+    return NextResponse.json(
+      { error: "Unauthorized", debug: "User verification failed" },
+      { status: 401 },
+    );
+  }
+  if (user.role !== "patient") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const formData = await request.formData();
     const description = metaSchema.safeParse({
       description: formData.get("description") ?? undefined,
     }).data?.description;
+
     const files = formData
       .getAll("files")
       .filter((v): v is File => v instanceof File);
-    if (files.length === 0)
+    if (files.length === 0) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
+    }
 
-    const created = [];
+    const created: { id: string; fileUrl: string; fileName: string | null }[] =
+      [];
+
     for (const file of files) {
       if (!MEDICAL_RECORD_ALLOWED_TYPES.has(file.type)) {
         return NextResponse.json(
@@ -72,15 +95,19 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
-      if (file.size > 15 * 1024 * 1024)
+      const max = 15 * 1024 * 1024;
+      if (file.size > max) {
         return NextResponse.json(
           { error: "File too large (max 15MB)" },
           { status: 400 },
         );
+      }
+
       const { fileUrl, fileType, fileSize } = await persistMedicalRecordFile(
         user.id,
         file,
       );
+
       const record = await prisma.medicalRecord.create({
         data: {
           patientId: user.id,
@@ -91,6 +118,7 @@ export async function POST(request: NextRequest) {
           description: description ?? null,
         },
       });
+
       await writeAuditLog({
         userId: user.id,
         action: "medical_record_uploaded",
@@ -99,20 +127,24 @@ export async function POST(request: NextRequest) {
         ipAddress: request.headers.get("x-forwarded-for"),
         userAgent: request.headers.get("user-agent"),
       });
+
       created.push({
         id: record.id,
         fileUrl: record.fileUrl,
         fileName: record.fileName,
       });
     }
+
     const rooms = await roomsForPatientBroadcast(user.id);
     await emitRealtime("record:uploaded", rooms, {
       patientId: user.id,
       count: created.length,
       recordIds: created.map((c) => c.id),
     });
+
     return NextResponse.json({ items: created });
   } catch (e) {
+    console.error(e);
     const message = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }

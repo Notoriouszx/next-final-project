@@ -7,17 +7,29 @@ const secret = new TextEncoder().encode(
 );
 
 export async function verifyTokenAndGetUser(authHeader: string | null) {
-  console.log("[verify] authHeader present:", !!authHeader);
-  if (!authHeader?.startsWith("Bearer ")) {
-    console.log("[verify] No Bearer token");
+  console.log("[verify] ===== START =====");
+  console.log("[verify] Auth header present?", !!authHeader);
+  if (!authHeader) {
+    console.log("[verify] No Authorization header");
+    return null;
+  }
+  if (!authHeader.startsWith("Bearer ")) {
+    console.log("[verify] Header does not start with Bearer");
     return null;
   }
   const token = authHeader.slice(7);
-  console.log("[verify] token (first 20 chars):", token.substring(0, 20));
+  console.log(
+    "[verify] Token (first 20 chars):",
+    token.substring(0, 20) + "...",
+  );
+  console.log(
+    "[verify] Secret (first 10 chars):",
+    new TextDecoder().decode(secret.slice(0, 10)) + "...",
+  );
   try {
     const { payload } = await jwtVerify(token, secret);
-    console.log("[verify] decoded payload:", payload);
-    const userId = payload.sub as string;
+    console.log("[verify] JWT verified, payload:", payload);
+    const userId = payload.sub;
     if (!userId) {
       console.log("[verify] No sub claim");
       return null;
@@ -26,10 +38,10 @@ export async function verifyTokenAndGetUser(authHeader: string | null) {
       where: { id: userId },
       select: { id: true, role: true, name: true, email: true },
     });
-    console.log("[verify] user found:", !!user);
+    console.log("[verify] User found:", !!user);
     return user;
   } catch (err) {
-    console.error("[verify] JWT verification error:", err);
+    console.error("[verify] JWT error details:", err);
     return null;
   }
 }

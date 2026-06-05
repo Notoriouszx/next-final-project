@@ -15,17 +15,20 @@ const metaSchema = z.object({
 });
 
 // -----------------------------------------------------------------------------
-// Helper to remove the Cookie header – forces auth to use Bearer token only
+// Convert Headers to plain object and remove the 'cookie' field
 // -----------------------------------------------------------------------------
-function cleanHeaders(headers: Headers): Headers {
-  const cleaned = new Headers(headers);
-  cleaned.delete("cookie");
-  return cleaned;
+function cleanHeaders(headers: Headers): Record<string, string> {
+  const obj: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    if (key.toLowerCase() !== "cookie") {
+      obj[key] = value;
+    }
+  });
+  return obj;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/medical-records
-// Returns all medical records belonging to the authenticated patient.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
   const cleanHeadersObj = cleanHeaders(request.headers);
@@ -64,7 +67,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/medical-records  (unchanged — kept here so the file is complete)
+// POST /api/medical-records
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const cleanHeadersObj = cleanHeaders(request.headers);

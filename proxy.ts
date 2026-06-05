@@ -7,7 +7,9 @@ import { routing } from "./i18n/routing";
 
 const ALLOWED_ORIGINS = [
   "*",
-  "http://localhost:52497",
+  "https://notoriouszx.github.io", // ← no trailing slash
+  "http://localhost:3000",
+  "http://localhost:5000",
   "https://project-9g6if.vercel.app",
 ];
 

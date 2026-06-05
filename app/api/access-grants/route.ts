@@ -14,22 +14,24 @@ const createSchema = z.object({
 });
 
 // -----------------------------------------------------------------------------
-// Helper to remove the Cookie header – forces auth to use Bearer token only
+// Helper: convert Headers to a plain object and exclude the 'cookie' field.
 // -----------------------------------------------------------------------------
-function cleanHeaders(headers: Headers): Headers {
-  const cleaned = new Headers(headers);
-  cleaned.delete("cookie");
-  return cleaned;
+function headersWithoutCookie(headers: Headers): Record<string, string> {
+  const obj: Record<string, string> = {};
+  for (const [key, value] of headers.entries()) {
+    if (key.toLowerCase() !== "cookie") {
+      obj[key] = value;
+    }
+  }
+  return obj;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/access-grants
-// Returns all access grants belonging to the authenticated patient,
-// including the doctor name for display in the Flutter UI.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanHeadersObj = cleanHeaders(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeadersObj });
+  const cleanHeaders = headersWithoutCookie(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -79,15 +81,14 @@ export async function GET(request: NextRequest) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/access-grants  (unchanged — kept here so the file is complete)
+// POST /api/access-grants
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanHeadersObj = cleanHeaders(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeadersObj });
+  const cleanHeaders = headersWithoutCookie(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
   const role = (session.user as { role?: string }).role;
   if (role !== "patient") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

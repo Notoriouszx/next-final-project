@@ -15,21 +15,26 @@ const metaSchema = z.object({
 });
 
 // -----------------------------------------------------------------------------
-// Helper to remove the Cookie header – forces auth to use Bearer token only
+// Helper: convert Headers to a plain object and exclude the 'cookie' field.
+// This forces auth.api.getSession to ignore cookies and use only the
+// Authorization header (Bearer token).
 // -----------------------------------------------------------------------------
-function cleanHeaders(headers: Headers): Headers {
-  const cleaned = new Headers(headers);
-  cleaned.delete("cookie");
-  return cleaned;
+function headersWithoutCookie(headers: Headers): Record<string, string> {
+  const obj: Record<string, string> = {};
+  for (const [key, value] of headers.entries()) {
+    if (key.toLowerCase() !== "cookie") {
+      obj[key] = value;
+    }
+  }
+  return obj;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/medical-records
-// Returns all medical records belonging to the authenticated patient.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanHeadersObj = cleanHeaders(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeadersObj });
+  const cleanHeaders = headersWithoutCookie(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -52,7 +57,6 @@ export async function GET(request: NextRequest) {
         createdAt: true,
       },
     });
-
     return NextResponse.json({ items: records });
   } catch (e) {
     console.error(e);
@@ -64,11 +68,11 @@ export async function GET(request: NextRequest) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/medical-records  (unchanged — kept here so the file is complete)
+// POST /api/medical-records
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanHeadersObj = cleanHeaders(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeadersObj });
+  const cleanHeaders = headersWithoutCookie(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

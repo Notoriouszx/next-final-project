@@ -8,8 +8,27 @@ const secret =
   process.env.BETTER_AUTH_SECRET ??
   "development-only-secret-min-32-chars-long!!";
 
+// Every origin that is allowed to send credentialed requests (cookies).
+// Wildcards do NOT work with withCredentials=true — list each origin explicitly.
+const trustedOrigins = [
+  // Flutter web (GitHub Pages)
+  "https://notoriouszx.github.io",
+  // Local development
+  "http://localhost:3000",
+  "http://localhost:5000",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5000",
+  // The Vercel deployment itself (for the web dashboard)
+  "https://project-9g6if.vercel.app",
+  // Any extra origins from the environment variable (comma-separated)
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+];
+
 export const auth = betterAuth({
-  trustedOrigins: ["*"],
+  trustedOrigins,
 
   appName: "E-HealthCare",
   baseURL:

@@ -13,10 +13,64 @@ const createSchema = z.object({
   expiresInHours: z.number().min(1).max(720).default(72),
 });
 
-/**
- * Patient creates a grant for a doctor or nurse (magic link token + OTP).
- * Caller must be authenticated as the patient.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/access-grants
+// Returns all access grants belonging to the authenticated patient,
+// including the doctor name for display in the Flutter UI.
+// ─────────────────────────────────────────────────────────────────────────────
+export async function GET(request: NextRequest) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const role = (session.user as { role?: string }).role;
+  if (role !== "patient") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const grants = await prisma.accessGrant.findMany({
+      where: { patientId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        patientId: true,
+        doctorId: true,
+        nurseId: true,
+        otp: true,
+        status: true,
+        expiresAt: true,
+        createdAt: true,
+        doctor: { select: { name: true } },
+        nurse: { select: { name: true } },
+      },
+    });
+
+    const items = grants.map((g) => ({
+      id: g.id,
+      patientId: g.patientId,
+      doctorId: g.doctorId,
+      nurseId: g.nurseId,
+      doctorName: g.doctor?.name ?? g.nurse?.name ?? null,
+      otp: g.otp,
+      status: g.status,
+      expiresAt: g.expiresAt.toISOString(),
+      createdAt: g.createdAt.toISOString(),
+    }));
+
+    return NextResponse.json({ items });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/access-grants  (unchanged — kept here so the file is complete)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
@@ -35,13 +89,13 @@ export async function POST(request: NextRequest) {
     if (!doctorId && !nurseId) {
       return NextResponse.json(
         { error: "Provide doctorId or nurseId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (doctorId && nurseId) {
       return NextResponse.json(
         { error: "Specify only one of doctorId or nurseId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,7 +124,11 @@ export async function POST(request: NextRequest) {
     });
 
     const rooms = await roomsForPatientBroadcast(session.user.id);
-    const staffRoom = doctorId ? `user:${doctorId}` : nurseId ? `user:${nurseId}` : null;
+    const staffRoom = doctorId
+      ? `user:${doctorId}`
+      : nurseId
+        ? `user:${nurseId}`
+        : null;
     const allRooms = staffRoom ? [...new Set([...rooms, staffRoom])] : rooms;
     await emitRealtime("access:updated", allRooms, {
       kind: "granted",
@@ -92,7 +150,7 @@ export async function POST(request: NextRequest) {
     console.error(error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

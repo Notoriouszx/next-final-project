@@ -14,15 +14,15 @@ const createSchema = z.object({
 });
 
 // -----------------------------------------------------------------------------
-// Convert Headers to plain object and remove the 'cookie' field
+// Helper: convert Headers to a plain object and exclude the 'cookie' field.
 // -----------------------------------------------------------------------------
-function cleanHeaders(headers: Headers): Record<string, string> {
+function headersWithoutCookie(headers: Headers): Record<string, string> {
   const obj: Record<string, string> = {};
-  headers.forEach((value, key) => {
+  for (const [key, value] of headers.entries()) {
     if (key.toLowerCase() !== "cookie") {
       obj[key] = value;
     }
-  });
+  }
   return obj;
 }
 
@@ -30,8 +30,8 @@ function cleanHeaders(headers: Headers): Record<string, string> {
 // GET /api/access-grants
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanHeadersObj = cleanHeaders(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeadersObj });
+  const cleanHeaders = headersWithoutCookie(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -84,12 +84,11 @@ export async function GET(request: NextRequest) {
 // POST /api/access-grants
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanHeadersObj = cleanHeaders(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeadersObj });
+  const cleanHeaders = headersWithoutCookie(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
   const role = (session.user as { role?: string }).role;
   if (role !== "patient") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

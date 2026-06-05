@@ -62,7 +62,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    //nextCookies(),
+    nextCookies(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         console.info(`[magic-link] ${email}\n${url}`);

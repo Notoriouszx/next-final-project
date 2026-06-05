@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { verifyTokenAndGetUser } from "@/lib/verify-token";
 import { writeAuditLog } from "@/lib/audit";
 import { emitRealtime } from "@/lib/realtime";
 import { roomsForPatientBroadcast } from "@/lib/patient-realtime";
@@ -14,38 +14,30 @@ const metaSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
-// -----------------------------------------------------------------------------
-// Helper: convert Headers to a plain object and exclude the 'cookie' field.
-// This forces auth.api.getSession to ignore cookies and use only the
-// Authorization header (Bearer token).
-// -----------------------------------------------------------------------------
-function headersWithoutCookie(headers: Headers): Record<string, string> {
-  const obj: Record<string, string> = {};
-  for (const [key, value] of headers.entries()) {
-    if (key.toLowerCase() !== "cookie") {
-      obj[key] = value;
-    }
-  }
-  return obj;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/medical-records
-// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanHeaders = headersWithoutCookie(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeaders });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  console.log("[API] GET /api/medical-records");
+  const authHeader = request.headers.get("authorization");
+  console.log(
+    "[API] Auth header:",
+    authHeader ? authHeader.substring(0, 30) + "..." : "null",
+  );
+  const user = await verifyTokenAndGetUser(authHeader);
+  if (!user) {
+    return NextResponse.json(
+      { error: "Unauthorized", debug: "User verification failed" },
+      { status: 401 },
+    );
   }
-  const role = (session.user as { role?: string }).role;
-  if (role !== "patient") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (user.role !== "patient") {
+    return NextResponse.json(
+      { error: "Forbidden", debug: "Role is not patient" },
+      { status: 403 },
+    );
   }
 
   try {
     const records = await prisma.medicalRecord.findMany({
-      where: { patientId: session.user.id },
+      where: { patientId: user.id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -67,17 +59,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/medical-records
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanHeaders = headersWithoutCookie(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeaders });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authHeader = request.headers.get("authorization");
+  const user = await verifyTokenAndGetUser(authHeader);
+  if (!user) {
+    return NextResponse.json(
+      { error: "Unauthorized", debug: "User verification failed" },
+      { status: 401 },
+    );
   }
-  const role = (session.user as { role?: string }).role;
-  if (role !== "patient") {
+  if (user.role !== "patient") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -113,13 +104,13 @@ export async function POST(request: NextRequest) {
       }
 
       const { fileUrl, fileType, fileSize } = await persistMedicalRecordFile(
-        session.user.id,
+        user.id,
         file,
       );
 
       const record = await prisma.medicalRecord.create({
         data: {
-          patientId: session.user.id,
+          patientId: user.id,
           fileUrl,
           fileName: file.name,
           fileType,
@@ -129,7 +120,7 @@ export async function POST(request: NextRequest) {
       });
 
       await writeAuditLog({
-        userId: session.user.id,
+        userId: user.id,
         action: "medical_record_uploaded",
         category: "CREATE",
         details: { recordId: record.id, fileName: file.name, fileType },
@@ -144,9 +135,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const rooms = await roomsForPatientBroadcast(session.user.id);
+    const rooms = await roomsForPatientBroadcast(user.id);
     await emitRealtime("record:uploaded", rooms, {
-      patientId: session.user.id,
+      patientId: user.id,
       count: created.length,
       recordIds: created.map((c) => c.id),
     });

@@ -14,6 +14,48 @@ const metaSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/medical-records
+// Returns all medical records belonging to the authenticated patient.
+// ─────────────────────────────────────────────────────────────────────────────
+export async function GET(request: NextRequest) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const role = (session.user as { role?: string }).role;
+  if (role !== "patient") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const records = await prisma.medicalRecord.findMany({
+      where: { patientId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        fileUrl: true,
+        fileName: true,
+        fileType: true,
+        fileSize: true,
+        description: true,
+        createdAt: true,
+      },
+    });
+
+    return NextResponse.json({ items: records });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/medical-records  (unchanged — kept here so the file is complete)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
@@ -30,28 +72,34 @@ export async function POST(request: NextRequest) {
       description: formData.get("description") ?? undefined,
     }).data?.description;
 
-    const files = formData.getAll("files").filter((v): v is File => v instanceof File);
+    const files = formData
+      .getAll("files")
+      .filter((v): v is File => v instanceof File);
     if (files.length === 0) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
-    const created: { id: string; fileUrl: string; fileName: string | null }[] = [];
+    const created: { id: string; fileUrl: string; fileName: string | null }[] =
+      [];
 
     for (const file of files) {
       if (!MEDICAL_RECORD_ALLOWED_TYPES.has(file.type)) {
         return NextResponse.json(
           { error: `Unsupported type: ${file.type}. Use PDF, JPG, or PNG.` },
-          { status: 400 }
+          { status: 400 },
         );
       }
       const max = 15 * 1024 * 1024;
       if (file.size > max) {
-        return NextResponse.json({ error: "File too large (max 15MB)" }, { status: 400 });
+        return NextResponse.json(
+          { error: "File too large (max 15MB)" },
+          { status: 400 },
+        );
       }
 
       const { fileUrl, fileType, fileSize } = await persistMedicalRecordFile(
         session.user.id,
-        file
+        file,
       );
 
       const record = await prisma.medicalRecord.create({

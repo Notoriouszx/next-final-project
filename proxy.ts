@@ -6,29 +6,28 @@ import { routing } from "./i18n/routing";
 // --- Part 1: Configure CORS for API routes ---
 
 const ALLOWED_ORIGINS = [
-  "*",
-  "https://notoriouszx.github.io", // ← no trailing slash
+  "https://notoriouszx.github.io",
   "http://localhost:3000",
   "http://localhost:5000",
   "https://project-9g6if.vercel.app",
 ];
 
 function setCorsHeaders(response: NextResponse, origin: string | null) {
-  let allowOrigin = "*";
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    allowOrigin = origin;
-  }
+  // Must be exact origin (not "*") when credentials are involved
+  const allowOrigin =
+    origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   response.headers.set("Access-Control-Allow-Origin", allowOrigin);
   response.headers.set(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   );
-  // ✅ ADD x-blob-token to allowed headers
+  // x-session-token is used by the Flutter app for cross-domain auth
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, x-blob-token",
+    "Content-Type, Authorization, x-blob-token, x-session-token",
   );
   response.headers.set("Access-Control-Allow-Credentials", "true");
+  response.headers.set("Access-Control-Max-Age", "86400");
   return response;
 }
 

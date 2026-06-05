@@ -13,25 +13,15 @@ const createSchema = z.object({
   expiresInHours: z.number().min(1).max(720).default(72),
 });
 
-// -----------------------------------------------------------------------------
-// Helper: convert Headers to a plain object and exclude the 'cookie' field.
-// -----------------------------------------------------------------------------
-function headersWithoutCookie(headers: Headers): Record<string, string> {
-  const obj: Record<string, string> = {};
-  for (const [key, value] of headers.entries()) {
-    if (key.toLowerCase() !== "cookie") {
-      obj[key] = value;
-    }
-  }
-  return obj;
+function removeCookieHeader(headers: Headers): Headers {
+  const cleaned = new Headers(headers);
+  cleaned.delete("cookie");
+  return cleaned;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/access-grants
-// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cleanHeaders = headersWithoutCookie(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeaders });
+  const cleanedHeaders = removeCookieHeader(request.headers);
+  const session = await auth.api.getSession({ headers: cleanedHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -80,12 +70,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/access-grants
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cleanHeaders = headersWithoutCookie(request.headers);
-  const session = await auth.api.getSession({ headers: cleanHeaders });
+  const cleanedHeaders = removeCookieHeader(request.headers);
+  const session = await auth.api.getSession({ headers: cleanedHeaders });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

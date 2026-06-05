@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { verifyTokenAndGetUser } from "@/lib/verify-token";
+import { auth } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { emitRealtime } from "@/lib/realtime";
 import { roomsForPatientBroadcast } from "@/lib/patient-realtime";
@@ -14,30 +14,27 @@ const metaSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
+// Helper: remove cookie header from request headers
+function removeCookieHeader(headers: Headers): Headers {
+  const cleaned = new Headers(headers);
+  cleaned.delete("cookie");
+  return cleaned;
+}
+
 export async function GET(request: NextRequest) {
-  console.log("[API] GET /api/medical-records");
-  const authHeader = request.headers.get("authorization");
-  console.log(
-    "[API] Auth header:",
-    authHeader ? authHeader.substring(0, 30) + "..." : "null",
-  );
-  const user = await verifyTokenAndGetUser(authHeader);
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized", debug: "User verification failed" },
-      { status: 401 },
-    );
+  const cleanedHeaders = removeCookieHeader(request.headers);
+  const session = await auth.api.getSession({ headers: cleanedHeaders });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (user.role !== "patient") {
-    return NextResponse.json(
-      { error: "Forbidden", debug: "Role is not patient" },
-      { status: 403 },
-    );
+  const role = (session.user as { role?: string }).role;
+  if (role !== "patient") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const records = await prisma.medicalRecord.findMany({
-      where: { patientId: user.id },
+      where: { patientId: session.user.id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -60,15 +57,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const user = await verifyTokenAndGetUser(authHeader);
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized", debug: "User verification failed" },
-      { status: 401 },
-    );
+  const cleanedHeaders = removeCookieHeader(request.headers);
+  const session = await auth.api.getSession({ headers: cleanedHeaders });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (user.role !== "patient") {
+  const role = (session.user as { role?: string }).role;
+  if (role !== "patient") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -104,13 +99,13 @@ export async function POST(request: NextRequest) {
       }
 
       const { fileUrl, fileType, fileSize } = await persistMedicalRecordFile(
-        user.id,
+        session.user.id,
         file,
       );
 
       const record = await prisma.medicalRecord.create({
         data: {
-          patientId: user.id,
+          patientId: session.user.id,
           fileUrl,
           fileName: file.name,
           fileType,
@@ -120,7 +115,7 @@ export async function POST(request: NextRequest) {
       });
 
       await writeAuditLog({
-        userId: user.id,
+        userId: session.user.id,
         action: "medical_record_uploaded",
         category: "CREATE",
         details: { recordId: record.id, fileName: file.name, fileType },
@@ -135,9 +130,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const rooms = await roomsForPatientBroadcast(user.id);
+    const rooms = await roomsForPatientBroadcast(session.user.id);
     await emitRealtime("record:uploaded", rooms, {
-      patientId: user.id,
+      patientId: session.user.id,
       count: created.length,
       recordIds: created.map((c) => c.id),
     });

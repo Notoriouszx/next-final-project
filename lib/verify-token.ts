@@ -7,18 +7,29 @@ const secret = new TextEncoder().encode(
 );
 
 export async function verifyTokenAndGetUser(authHeader: string | null) {
-  if (!authHeader?.startsWith("Bearer ")) return null;
+  console.log("[verify] authHeader present:", !!authHeader);
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[verify] No Bearer token");
+    return null;
+  }
   const token = authHeader.slice(7);
+  console.log("[verify] token (first 20 chars):", token.substring(0, 20));
   try {
     const { payload } = await jwtVerify(token, secret);
+    console.log("[verify] decoded payload:", payload);
     const userId = payload.sub as string;
-    if (!userId) return null;
+    if (!userId) {
+      console.log("[verify] No sub claim");
+      return null;
+    }
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true, name: true, email: true },
     });
+    console.log("[verify] user found:", !!user);
     return user;
-  } catch {
+  } catch (err) {
+    console.error("[verify] JWT verification error:", err);
     return null;
   }
 }

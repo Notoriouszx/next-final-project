@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getApiSession } from "@/lib/api-session";
 
 const querySchema = z.object({
   search: z.string().optional().default(""),
@@ -10,7 +10,7 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getApiSession(request);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -33,8 +33,12 @@ export async function GET(request: NextRequest) {
     },
     select: { doctorId: true, nurseId: true },
   });
-  const busyDoctor = new Set(busy.map((b) => b.doctorId).filter(Boolean) as string[]);
-  const busyNurse = new Set(busy.map((b) => b.nurseId).filter(Boolean) as string[]);
+  const busyDoctor = new Set(
+    busy.map((b) => b.doctorId).filter(Boolean) as string[],
+  );
+  const busyNurse = new Set(
+    busy.map((b) => b.nurseId).filter(Boolean) as string[],
+  );
 
   const filters: Prisma.UserWhereInput[] = [
     {
@@ -43,9 +47,7 @@ export async function GET(request: NextRequest) {
     },
   ];
   if (q.search.trim()) {
-    filters.push({
-      name: { contains: q.search.trim(), mode: "insensitive" },
-    });
+    filters.push({ name: { contains: q.search.trim(), mode: "insensitive" } });
   }
 
   const users = await prisma.user.findMany({
@@ -90,7 +92,7 @@ export async function GET(request: NextRequest) {
     .map((u) => {
       const bio = u.biometricAuth;
       const verified = Boolean(
-        bio?.faceVerified && bio?.irisVerified && bio?.fingerprintVerified
+        bio?.faceVerified && bio?.irisVerified && bio?.fingerprintVerified,
       );
       return {
         id: u.id,

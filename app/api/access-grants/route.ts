@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getApiSession } from "@/lib/api-session";
 import { generateMagicToken, generateOtpCode } from "@/lib/tokens";
 import { writeAuditLog } from "@/lib/audit";
 import { emitRealtime } from "@/lib/realtime";
@@ -13,13 +13,8 @@ const createSchema = z.object({
   expiresInHours: z.number().min(1).max(720).default(72),
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/access-grants
-// Pass request.headers directly — Better Auth reads its own session cookie.
-// DO NOT strip the cookie header. That is what caused the 401.
-// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getApiSession(request);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -68,11 +63,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/access-grants
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getApiSession(request);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

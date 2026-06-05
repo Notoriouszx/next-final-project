@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getApiSession } from "@/lib/api-session";
 import { writeAuditLog } from "@/lib/audit";
 import { emitRealtime } from "@/lib/realtime";
 import { roomsForPatientBroadcast } from "@/lib/patient-realtime";
@@ -26,9 +26,9 @@ function extractTokenFromMagicInput(input: string): string {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getApiSession(request);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -76,12 +76,11 @@ export async function DELETE(
   return NextResponse.json({ ok: true });
 }
 
-/** Doctor resolves pending grant via patient OTP or magic link token. */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getApiSession(request);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -93,7 +92,6 @@ export async function PATCH(
     where: { id },
     include: { patient: { select: { id: true, name: true } } },
   });
-
   if (!grant) {
     return NextResponse.json({ error: "Grant not found" }, { status: 404 });
   }
@@ -105,14 +103,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (grant.status !== "active") {
-      return NextResponse.json({ error: "Only active assignments can be completed" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Only active assignments can be completed" },
+        { status: 400 },
+      );
     }
-
     await prisma.accessGrant.update({
       where: { id },
       data: { status: "resolved" },
     });
-
     await writeAuditLog({
       userId: session.user.id,
       action: "access_grant_resolved_by_doctor",
@@ -121,7 +120,6 @@ export async function PATCH(
       ipAddress: request.headers.get("x-forwarded-for"),
       userAgent: request.headers.get("user-agent"),
     });
-
     const rooms = await roomsForPatientBroadcast(grant.patientId);
     const staffRoom = `user:${session.user.id}`;
     await emitRealtime("access:updated", [...new Set([...rooms, staffRoom])], {
@@ -129,7 +127,6 @@ export async function PATCH(
       patientId: grant.patientId,
       grantId: id,
     });
-
     return NextResponse.json({ ok: true, status: "resolved" });
   }
 
@@ -143,17 +140,20 @@ export async function PATCH(
   if (!isDoctor && !isNurse) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
   if (grant.status !== "pending") {
-    return NextResponse.json({ error: "This request is no longer pending" }, { status: 400 });
+    return NextResponse.json(
+      { error: "This request is no longer pending" },
+      { status: 400 },
+    );
   }
-
   if (new Date() > grant.expiresAt) {
-    return NextResponse.json({ error: "This access request has expired" }, { status: 400 });
+    return NextResponse.json(
+      { error: "This access request has expired" },
+      { status: 400 },
+    );
   }
 
   const { method, otp, magicLink } = parsed.data;
-
   if (method === "otp") {
     const code = otp?.trim() ?? "";
     if (!grant.otp || grant.otp !== code) {
@@ -162,7 +162,10 @@ export async function PATCH(
   } else {
     const token = extractTokenFromMagicInput(magicLink ?? "");
     if (!grant.token || grant.token !== token) {
-      return NextResponse.json({ error: "Invalid magic link or token" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid magic link or token" },
+        { status: 400 },
+      );
     }
   }
 

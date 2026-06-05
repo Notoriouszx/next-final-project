@@ -14,12 +14,22 @@ const metaSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
+// -----------------------------------------------------------------------------
+// Helper to remove the Cookie header – forces auth to use Bearer token only
+// -----------------------------------------------------------------------------
+function cleanHeaders(headers: Headers): Headers {
+  const cleaned = new Headers(headers);
+  cleaned.delete("cookie");
+  return cleaned;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/medical-records
 // Returns all medical records belonging to the authenticated patient.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const cleanHeadersObj = cleanHeaders(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeadersObj });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -57,7 +67,8 @@ export async function GET(request: NextRequest) {
 // POST /api/medical-records  (unchanged — kept here so the file is complete)
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const cleanHeadersObj = cleanHeaders(request.headers);
+  const session = await auth.api.getSession({ headers: cleanHeadersObj });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
